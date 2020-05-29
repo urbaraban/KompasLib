@@ -21,11 +21,10 @@ namespace KompasLib.Event
 {
     public class DocumentEvent : BaseEvent, Kompas6API5.ksDocumentFileNotify
     {
-        private KmpsAppl api;
-        public DocumentEvent(object doc, KmpsAppl API)
+        public DocumentEvent(object doc)
             : base(doc, typeof(Kompas6API5.ksDocumentFileNotify).GUID, doc,
             -1)
-        { this.api = API; }
+        { }
 
 
         // kdBeginCloseDocument - Начало закрытия документа

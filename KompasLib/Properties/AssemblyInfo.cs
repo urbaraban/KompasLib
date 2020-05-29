@@ -8,10 +8,10 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("KmpsAppl.KompasAPILib")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Urbaraban")]
 [assembly: AssemblyProduct("KmpsAppl.KompasAPILib")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyTrademark("Urbaraban")]
 [assembly: AssemblyCulture("")]
 
 // Установка значения False для параметра ComVisible делает типы в этой сборке невидимыми

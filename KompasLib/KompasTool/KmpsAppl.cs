@@ -5,12 +5,13 @@ using Kompas6Constants;
 using KompasLib.Event;
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 
 namespace KompasLib.Tools
 {
-    public class KmpsAppl
+    public static class KmpsAppl
     {
         #region Variable
         //
@@ -19,38 +20,32 @@ namespace KompasLib.Tools
 
         private static KompasObject kompasAPI;
         private static IApplication appl;
-        private ksMathematic2D mat;
-        private IPropertyManager propMng;
-        private IProgressBarIndicator progressBar;
-        private KmpsDoc doc;
+        private static ksMathematic2D mat;
+        private static IPropertyManager propMng;
+        private static IProgressBarIndicator progressBar;
+        private static KmpsDoc doc;
 
-        private bool closeDocChek;
-        private int closeDocValue;
-        
-
+        private static bool closeDocChek;
+        private static int closeDocValue;
 
         //
         //public
         //
 
-
         //Изменили документ
-        public event EventHandler<KmpsAppl> ChangeDoc;
-        //Отключились
-        public event EventHandler<bool> ConnectBoolEvent;
+        public static event EventHandler<KmpsDoc> ChangeDoc;
 
-        public KmpsDoc Doc
+        //Отключились
+        public static event EventHandler<bool> ConnectBoolEvent;
+
+
+        public static KmpsDoc Doc
         {
             get => doc;
             set => doc = value;
         }
 
-
-
-        public bool someFlag = true;
-
-
-
+        public static bool someFlag = true;
 
         public static IApplication Appl
         {
@@ -58,18 +53,18 @@ namespace KompasLib.Tools
             set => appl = value;
         }
 
-        public ksMathematic2D Mat
+        public static ksMathematic2D Mat
         {
-            get => this.mat = (ksMathematic2D)kompasAPI.GetMathematic2D();
+            get => mat = (ksMathematic2D)kompasAPI.GetMathematic2D();
         }
 
-         public IProgressBarIndicator ProgressBar
+         public static IProgressBarIndicator ProgressBar
         {
             get => appl.ProgressBarIndicator;
             set => progressBar = value;
         }
 
-        public IPropertyManager PropMng
+        public static IPropertyManager PropMng
         {
             get => propMng;
             set => propMng = value;
@@ -89,7 +84,7 @@ namespace KompasLib.Tools
         }
         #endregion
 
-        public KmpsAppl(int CloseDocValue, bool CloseDocChek)
+        public static bool Connect() 
         {
             if (kompasAPI == null)
             {
@@ -107,30 +102,58 @@ namespace KompasLib.Tools
                     
                     appl = (IApplication)kompasAPI.ksGetApplication7();
                     if (appl == null)
-                        return;
+                        return false;
 
                     if (ConnectBoolEvent != null)
-                    ConnectBoolEvent(this, true);
+                    ConnectBoolEvent(null, true);
 
                     if (!BaseEvent.FindEvent(typeof(ApplicationEvent), null, -1))
                     {
-                        ApplicationEvent aplEvent = new ApplicationEvent(kompasAPI, this);
+                        ApplicationEvent aplEvent = new ApplicationEvent(kompasAPI);
                         aplEvent.Advise();
                     }
                 }
             }
+            return kompasAPI != null;
         }
 
+        public static bool OpenFile(string filepath)
+        {
+            int type = KmpsAppl.KompasAPI.ksGetDocumentTypeByName(filepath);
+            switch (type)
+            {
 
-        public void SelectDoc()
+                case (int)DocType.lt_DocSheetStandart:  //2d документы
+                case (int)DocType.lt_DocFragment:
+                    KmpsAppl.Doc.D5 = (ksDocument2D)KmpsAppl.KompasAPI.Document2D();
+                    if (KmpsAppl.Doc.D5 != null)
+                        Process.Start(filepath);
+                    return true;
+                    break;
+            }
+
+            int err = KmpsAppl.KompasAPI.ksReturnResult();
+            if (err != 0)
+                KmpsAppl.KompasAPI.ksResultNULL();
+            return false;
+        }
+        public static void ZoomAll()
         {
             if (kompasAPI != null)
             {
-                this.doc = new KmpsDoc(this);
+                IDocumentFrame documentFrame = appl.ActiveDocument.DocumentFrames[0];
+                documentFrame.ZoomPrevNextOrAll(ZoomTypeEnum.ksZoomAll);
+            }
+        }
+
+        public static void SelectDoc()
+        {
+            if (kompasAPI != null)
+            {
+                doc = new KmpsDoc();
                 if (doc.D5 != null)
                 {
-                    if (ChangeDoc != null)
-                        ChangeDoc(this, this);
+                    ChangeDoc?.Invoke(null, doc);
 
                     int[] YesType = { 1, 4, 9, 35, 27 };
 
@@ -143,40 +166,43 @@ namespace KompasLib.Tools
             }
         }
 
-        public bool CreateDoc()
+        public static bool CreateDoc()
         {
-            ksDocument2D doc2d = (ksDocument2D)kompasAPI.Document2D();
-            // создать новый документ
-            // первый параметр - тип открываемого файла
-            //  0 - лист чертежа
-            //  1 - фрагмент
-            //  2 - текстовый документ
-            //  3 - спецификация
-            //  4 - 3D-модель
-            // второй параметр указывает на необходимость выдачи запроса "Файл изменен. Сохранять?" при закрытии файла
-            // третий параметр - указатель на IDispatch, по которому Графие вызывает уведомления об изенении своего состояния
-            // ф-ия возвращает HANDLE открытого документа
-            if (doc2d != null)
+            if (KmpsAppl.kompasAPI != null)
             {
-                ksDocumentParam docPar = (ksDocumentParam)kompasAPI.GetParamStruct((short)StructType2DEnum.ko_DocumentParam);
-
-                if (docPar != null)
+                ksDocument2D doc2d = (ksDocument2D)kompasAPI.Document2D();
+                // создать новый документ
+                // первый параметр - тип открываемого файла
+                //  0 - лист чертежа
+                //  1 - фрагмент
+                //  2 - текстовый документ
+                //  3 - спецификация
+                //  4 - 3D-модель
+                // второй параметр указывает на необходимость выдачи запроса "Файл изменен. Сохранять?" при закрытии файла
+                // третий параметр - указатель на IDispatch, по которому Графие вызывает уведомления об изенении своего состояния
+                // ф-ия возвращает HANDLE открытого документа
+                if (doc2d != null)
                 {
-                    docPar.Init();
-                    docPar.regime = 0;
-                    docPar.type = (int)DocType.lt_DocFragment;
-                    docPar.author = Environment.UserName;
-                    docPar.comment = "KPCm";
-                    if (doc2d.ksCreateDocument(docPar))
-                        return true;
-                    else return false;
+                    ksDocumentParam docPar = (ksDocumentParam)kompasAPI.GetParamStruct((short)StructType2DEnum.ko_DocumentParam);
+
+                    if (docPar != null)
+                    {
+                        docPar.Init();
+                        docPar.regime = 0;
+                        docPar.type = (int)DocType.lt_DocFragment;
+                        docPar.author = Environment.UserName;
+                        docPar.comment = "KPCm";
+                        if (doc2d.ksCreateDocument(docPar))
+                            return true;
+                        else return false;
+                    }
                 }
             }
             return false;
         }
 
 
-        private void AdviseDoc(object doc, int docType, int objType/*-1*/)
+        private static void AdviseDoc(object doc, int docType, int objType/*-1*/)
         {
             if (doc == null)
                 return;
@@ -185,7 +211,7 @@ namespace KompasLib.Tools
             if (!BaseEvent.FindEvent(typeof(DocumentEvent), doc, objType))
             {
                 // Обработчик событий от документа
-                DocumentEvent docEvent = new DocumentEvent((Kompas6API5.ksDocumentFileNotify_Event)doc, this);
+                DocumentEvent docEvent = new DocumentEvent((Kompas6API5.ksDocumentFileNotify_Event)doc);
                 // Подписка на события документа
                 int advise = docEvent.Advise();
 
@@ -236,7 +262,7 @@ namespace KompasLib.Tools
                             object objNotify = doc2D != null ? doc2D.GetObject2DNotify(objType) : null;
                             if (objNotify != null)
                             {
-                                Object2DEvent objEvent = new Object2DEvent(objNotify, doc2D, objType, doc2D.GetObject2DNotifyResult(), true, this);
+                                Object2DEvent objEvent = new Object2DEvent(objNotify, doc2D, objType, doc2D.GetObject2DNotifyResult(), true);
                                 objEvent.Advise();
                             }
                         }
@@ -248,14 +274,14 @@ namespace KompasLib.Tools
         }
 
 
-        public void DisconnectKmps()
+        public static void DisconnectKmps()
         {
             if (kompasAPI != null)
             {
                 // принудительно зпрервать св¤зь с  омпас
                 Marshal.ReleaseComObject(kompasAPI);
                 if (ConnectBoolEvent != null)
-                    ConnectBoolEvent(this, false);
+                    ConnectBoolEvent(null, false);
             }
         }
 

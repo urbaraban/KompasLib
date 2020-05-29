@@ -1,4 +1,5 @@
-﻿using Kompas6API7;
+﻿using Kompas6API5;
+using Kompas6API7;
 using KompasLib.Tools;
 using System;
 using System.Collections.Generic;
@@ -42,6 +43,15 @@ namespace KompasLib.Event
         // frMouseMove - Движение мыши
         public bool MouseMove(short nShiftState, int x, int y)
         {
+            if (SizeTool.SelectPointFlag)
+            {
+                IDrawingObject drwObj = (IDrawingObject)SizeTool.SelectObj;
+                SizeTool.PhGroup.Clear(true);
+                SizeTool.PhGroup.Open();
+                SizeTool.PhGroup.AddObjects((object)KmpsAppl.KompasAPI.TransferReference(KmpsAppl.Doc.D5.ksPoint(x, y, new Random(8).Next()), KmpsAppl.Doc.D5.reference));
+                SizeTool.PhGroup.Close();
+            }
+
             return true;
         }
 

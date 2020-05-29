@@ -15,11 +15,10 @@ namespace KompasLib.Event
 {
     public class ApplicationEvent : BaseEvent, ksKompasObjectNotify
     {
-        private KmpsAppl api;
-        public ApplicationEvent(object obj, KmpsAppl API)
+        public ApplicationEvent(object obj)
           : base(obj, typeof(ksKompasObjectNotify).GUID,
           null, -1)
-        { this.api = API; }
+        { }
 
 
         // koApplicatinDestroy - Закрытие приложения
@@ -28,7 +27,8 @@ namespace KompasLib.Event
             // Самоудаление
             TerminateEvents();
             KmpsAppl.KompasAPI = null;
-            Thread thread = new Thread(api.DisconnectKmps);
+            Thread thread = new Thread(KmpsAppl.DisconnectKmps);
+            thread.IsBackground = true;
             thread.Start(); 
             return true;
         }
@@ -66,7 +66,8 @@ namespace KompasLib.Event
         // koActiveDocument - Переключение на другой активный документ
         public bool ChangeActiveDocument(object newDoc, int docType)
         {
-            Thread thread = new Thread(api.SelectDoc);
+            Thread thread = new Thread(KmpsAppl.SelectDoc);
+            thread.IsBackground = true;
             thread.Start();
             return true;
         }
@@ -75,7 +76,8 @@ namespace KompasLib.Event
         // koCreateDocument - Документ создан
         public bool CreateDocument(object newDoc, int docType)
         {
-            Thread thread = new Thread(api.SelectDoc);
+            Thread thread = new Thread(KmpsAppl.SelectDoc);
+            thread.IsBackground = true;
             thread.Start();
             return true;
         }
@@ -84,7 +86,8 @@ namespace KompasLib.Event
         // koOpenDocumen - Документ открыт
         public bool OpenDocument(object newDoc, int docType)
         {
-            Thread thread = new Thread(api.SelectDoc);
+            Thread thread = new Thread(KmpsAppl.SelectDoc);
+            thread.IsBackground = true;
             thread.Start();
             return true;
         }

@@ -5,11 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 //#define __LIGHT_VERSION__
-#if (__LIGHT_VERSION__)
-	using Kompas6LTAPI5;
-#else
-	using Kompas6API5;
-#endif
+using Kompas6API5;
 using Kompas6API7;
 using KompasLib.Tools;
 
@@ -18,12 +14,11 @@ namespace KompasLib.Event
     public class Object2DEvent : BaseEvent, ksObject2DNotify
     {
         private ksObject2DNotifyResult m_res;
-        private KmpsAppl api;
         public Object2DEvent(object obj, object doc, int objType,
-            ksObject2DNotifyResult res, bool selfAdvise, KmpsAppl API)
+            ksObject2DNotifyResult res, bool selfAdvise)
             : base(obj, typeof(ksObject2DNotify).GUID, doc,
             objType)
-        { m_res = res; api = API; }
+        { m_res = res; }
 
 
         // kdChangeActive - Переключение вида/слоя в текущий
@@ -36,18 +31,18 @@ namespace KompasLib.Event
         // koBeginDelete - Попытка удаления объекта
         public bool BeginDelete(int objout)
         {
-            object obj = KmpsAppl.KompasAPI.TransferReference(objout, api.Doc.D5.reference);
+            object obj = KmpsAppl.KompasAPI.TransferReference(objout, KmpsAppl.Doc.D5.reference);
             try
             {
-                api.Doc.D5.ksLightObj(objout, 1);
+                KmpsAppl.Doc.D5.ksLightObj(objout, 1);
                 IDrawingGroup pDrawObj = (IDrawingGroup)obj;
                 if (pDrawObj != null)
                 {
-                    api.Doc.VisibleLayer(88, true);
+                    KmpsAppl.Doc.VisibleLayer(88, true);
                 }
             }
             catch { }
-            api.Doc.D5.ksLightObj(objout, 0);
+            KmpsAppl.Doc.D5.ksLightObj(objout, 0);
             return true;
         }
 
@@ -161,30 +156,34 @@ namespace KompasLib.Event
         // koCreate - Создание объектов
         public bool CreateObject(int objout)
         {
-            if (api.someFlag)
+            if (KmpsAppl.someFlag)
             {
-                IDrawingObject pDrawObj = (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(objout, api.Doc.D5.reference);
-                if (pDrawObj != null)
+                try
                 {
-                    long type = (int)pDrawObj.DrawingObjectType;
-                    switch (type)
+                    IDrawingObject pDrawObj = (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(objout, KmpsAppl.Doc.D5.reference);
+                    if (pDrawObj != null)
                     {
-                        // Линия
-                        case (int)Kompas6Constants.DrawingObjectTypeEnum.ksDrLineSeg:
-                            {
-                                ILineSegment obj = (ILineSegment)pDrawObj;
-                                if ((obj.Style == 1) || (obj.Style == 7)) api.Doc.ST.SizeMe(objout, true);
-                                break;
-                            }
-                        // Квадрат
-                        case (int)Kompas6Constants.DrawingObjectTypeEnum.ksDrRectangle:
-                            {
-                                IRectangle obj = (IRectangle)pDrawObj;
-                                if ((obj.Style == 1) || (obj.Style == 7)) api.Doc.ST.SizeMe(objout, true);
-                                break;
-                            }
+                        long type = (int)pDrawObj.DrawingObjectType;
+                        switch (type)
+                        {
+                            // Линия
+                            case (int)Kompas6Constants.DrawingObjectTypeEnum.ksDrLineSeg:
+                                {
+                                    ILineSegment obj = (ILineSegment)pDrawObj;
+                                    if ((obj.Style == 1) || (obj.Style == 7)) KmpsAppl.Doc.ST.SizeMe(objout, true);
+                                    break;
+                                }
+                            // Квадрат
+                            case (int)Kompas6Constants.DrawingObjectTypeEnum.ksDrRectangle:
+                                {
+                                    IRectangle obj = (IRectangle)pDrawObj;
+                                    if ((obj.Style == 1) || (obj.Style == 7)) KmpsAppl.Doc.ST.SizeMe(objout, true);
+                                    break;
+                                }
+                        }
                     }
                 }
+                catch { }
             }
             return true;
         }

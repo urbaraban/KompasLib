@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>KompasLib</RootNamespace>
     <AssemblyName>KompasLib</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -23,7 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -56,6 +56,32 @@
     <LangVersion>7.3</LangVersion>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>KompasLib.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CONVERTLIBINTERFACES">
@@ -94,13 +120,14 @@
       <HintPath>..\Lib16.15\KompasAPI7.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="KompasLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\x86\Debug\KompasLib.dll</HintPath>
-    </Reference>
+    <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="QRCoder, Version=1.3.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>C:\Users\E_Shadrunov\source\repos\KompasCeiling\packages\QRCoder.1.3.9\lib\net40\QRCoder.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -111,6 +138,9 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="WindowsBase" />
+    <Reference Include="WPFTextBoxAutoComplete, Version=1.0.0.2, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>C:\Users\E_Shadrunov\source\repos\KompasCeiling\packages\WPFTextBoxAutoComplete.1.0.5\lib\net40\WPFTextBoxAutoComplete.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="KompasEvent\Document2DEvent.cs" />
@@ -118,16 +148,23 @@
     <Compile Include="KompasEvent\DocumentFrameEvent.cs" />
     <Compile Include="KompasEvent\Object2DEvent.cs" />
     <Compile Include="KompasEvent\SelectMngEvent.cs" />
+    <Compile Include="KompasTool\ContourCalc.cs" />
+    <Compile Include="KompasTool\HlpClasses.cs" />
     <Compile Include="KompasTool\KmpsAppl.cs" />
     <Compile Include="KompasTool\KmpsAttr.cs" />
     <Compile Include="KompasTool\KmpsDoc.cs" />
     <Compile Include="KompasEvent\ApplicationEvent.cs" />
     <Compile Include="KompasEvent\BaseEvent.cs" />
     <Compile Include="KompasTool\KmpsMacro.cs" />
-    <Compile Include="KompasTool\KmpsVariable.cs" />
+    <Compile Include="KompasTool\KVariable.cs" />
+    <Compile Include="KompasTool\SaveMe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="KompasTool\SizeTool.cs" />
     <Compile Include="KompasTool\SQLTool.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="KompasLib.pfx" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

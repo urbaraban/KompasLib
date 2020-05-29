@@ -1,4 +1,5 @@
 ﻿using Kompas6API5;
+using Kompas6API7;
 using KompasLib.Event;
 using KompasLib.Tools;
 using System;
@@ -19,6 +20,23 @@ namespace KompasLib.Event
         // ksmSelect - Объект селектирован
         public bool Select(object obj)
         {
+            try
+            {
+                Array array = KmpsAppl.Doc.GetSelectContainer().SelectedObjects;
+            }
+            catch
+            {
+                IDrawingObject drawingObject = (IDrawingObject)KmpsAppl.KompasAPI.TransferReference((int)obj, KmpsAppl.Doc.D5.reference);
+                switch (drawingObject.DrawingObjectType)
+                {
+                    case Kompas6Constants.DrawingObjectTypeEnum.ksDrLDimension:
+                        KmpsAppl.Doc.ChangeSelectDimention(drawingObject);
+                        break;
+                    case Kompas6Constants.DrawingObjectTypeEnum.ksDrADimension:
+                        KmpsAppl.Doc.ChangeSelectDimention(drawingObject);
+                        break;
+                }
+            }
             return true;
         }
 

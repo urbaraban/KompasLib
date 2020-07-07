@@ -163,6 +163,7 @@
     <Compile Include="KompasTool\SQLTool.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="KompasLib.pfx" />
     <None Include="packages.config" />
   </ItemGroup>

@@ -401,7 +401,7 @@ namespace KompasLib.Tools
                     { "{LineP}", (index ? KVariable.Give("LineP", Index) : KVariable.Sum("LineP", IC)).ToString() },
                     { "{CurveP}", (index ? KVariable.Give("CurveP", Index) : KVariable.Sum("CurveP", IC)).ToString() },
                     { "{Shov}", (index ? KVariable.Give("Shov", Index) : KVariable.Sum("Shov", IC)).ToString() },
-                    { "{photo}", (index ? KVariable.Give("photo", Index) : KVariable.Sum("photo", IC)).ToString() },
+                    { "{photo}", KVariable.Give("photo", string.Empty).ToString() },
                     { "{photoNumber}", KVariable.GiveNote("photo", string.Empty) },
 
                     { "{lenth}", (index ? KVariable.Give("lenth", Index) : KVariable.Sum("lenth", IC)).ToString() },
@@ -554,7 +554,7 @@ namespace KompasLib.Tools
                 doc5.ksText(x + 0.83 * tW + 2, y + 0.6 * tH + 2, 0, szText, 1, 0, "Причина");
                 //Вторая строка
                 doc5.ksText(x + 2, y + 0.4 * tH + 2, 0, szText, 1, 0, KVariable.Give("Number", string.Empty).ToString());
-                doc5.ksText(x + 0.16 * tW + 2, y + 0.4 * tH + 2, 0, szText, 1, 0, KVariable.GiveNote("photo", string.Empty));
+                doc5.ksText(x + 0.16 * tW + 2, y + 0.4 * tH + 2, 0, szText, 1, 0, KVariable.GiveNote("Comment3", string.Empty));
                 doc5.ksText(x + 0.33 * tW + 2, y + 0.4 * tH + 2, 0, szText, 1, 0, KVariable.GiveNote("factura", IC[0].ToString()) + " " + KVariable.GiveNote("color", IC[0].ToString()));
                 doc5.ksEndObj();
             }

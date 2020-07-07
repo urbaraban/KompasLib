@@ -1264,9 +1264,16 @@ namespace KompasLib.Tools
         //Меняет параметр в размере
         public async static void SetValToVariableDim(IDrawingObject1 drawing1, double VariableValue)
         {
-            foreach (IParametriticConstraint constraint in drawing1.Constraints)
-                if (constraint.ConstraintType == ksConstraintTypeEnum.ksCDimWithVariable)
-                    await KVariable.UpdateAsync(constraint.Variable, VariableValue, string.Empty);
+            if (drawing1.Constraints != null)
+            {
+                foreach (IParametriticConstraint constraint in drawing1.Constraints)
+                    if (constraint.ConstraintType == ksConstraintTypeEnum.ksCDimWithVariable)
+                        await KVariable.UpdateAsync(constraint.Variable, VariableValue, string.Empty);
+            }
+            else
+            {
+
+            }
         }
 
         //Меняет параметр в размере
@@ -1317,13 +1324,14 @@ namespace KompasLib.Tools
             {
                 List<int> BreakIndex = new List<int>();
                 IDrawingObject1 drawingObject1 = (IDrawingObject1)fObj;
-                foreach (ParametriticConstraint constraint in drawingObject1.Constraints)
-                    if (constraint.ConstraintType == ksConstraintTypeEnum.ksCMergePoints)
-                        if (BreakIndex.IndexOf(constraint.Index) == -1)
-                            foreach (IDrawingObject drawingObject in constraint.Partner)
-                                if (drawingObject.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
-                                    if (BreakIndex.IndexOf(constraint.Index) == -1)
-                                        BreakIndex.Add(constraint.Index);
+                if (drawingObject1.Constraints != null)
+                    foreach (ParametriticConstraint constraint in drawingObject1.Constraints)
+                        if (constraint.ConstraintType == ksConstraintTypeEnum.ksCMergePoints)
+                            if (BreakIndex.IndexOf(constraint.Index) == -1)
+                                foreach (IDrawingObject drawingObject in constraint.Partner)
+                                    if (drawingObject.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
+                                        if (BreakIndex.IndexOf(constraint.Index) == -1)
+                                            BreakIndex.Add(constraint.Index);
                 if (BreakIndex.IndexOf(0) == -1) return 0;
                 if (BreakIndex.IndexOf(1) == -1) return 1;
 
@@ -1607,7 +1615,7 @@ namespace KompasLib.Tools
 
                 ILineSegments lineSegments = KmpsAppl.Doc.GetDrawingContainer().LineSegments;
 
-                try
+                if (KmpsAppl.Doc.GetSelectContainer().SelectedObjects != null && !(KmpsAppl.Doc.GetSelectContainer().SelectedObjects is object[]))
                 {       //Если выбранный объект линия то она будет первым объектом
                     if (((IDrawingObject)KmpsAppl.Doc.GetSelectContainer().SelectedObjects).DrawingObjectType == DrawingObjectTypeEnum.ksDrAnnLineSeg)
                     {
@@ -1615,7 +1623,7 @@ namespace KompasLib.Tools
                         KmpsAppl.Doc.GetSelectContainer().UnselectAll();
                     }
                 }
-                catch { };
+
 
                 if (lastLine.Count == 0) //Если объект первой линии пустой то мы ему находим 
                     if (lineSegments.Count > 0)

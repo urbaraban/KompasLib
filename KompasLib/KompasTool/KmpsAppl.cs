@@ -129,7 +129,7 @@ namespace KompasLib.Tools
                     if (KmpsAppl.Doc.D5 != null)
                         Process.Start(filepath);
                     return true;
-                    break;
+
             }
 
             int err = KmpsAppl.KompasAPI.ksReturnResult();

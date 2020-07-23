@@ -1,124 +1,59 @@
 ﻿using Kompas6API7;
-using System.Data;
-using System.Data.SqlClient;
+using KompasLib.KompasTool;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace KompasLib.Tools
 {
-    public static class KVariable
+    public class KVariable
     {
-        //Сумма переменных
-        public static double Sum(string name, ItemCollection itemcolletion)
+        private KmpsDoc _doc;
+        public KVariable(KmpsDoc Doc)
         {
-            double Summ = 0;
-            for (int i = 0; i < itemcolletion.Count; i++)
-                Summ += Give(name, itemcolletion[i].ToString());
-            return Summ;
+            this._doc = Doc;
         }
 
         //удаляем переменные
-        public static async Task ClearAsync(string num, DataTable variableTable)
-        {
-           await Task.Factory.StartNew(() =>
-            {
-                if (variableTable == null)
-                    variableTable = comboDataSet("SELECT Name, InText FROM dbo.Variable WHERE Base='False'", "Variable").Tables[0];
-
-                DataRow[] rows = variableTable.Select("Base = false");
-
-                for (int i = 0; i < rows.Length; i++)
-                    if (!KmpsDoc.D71.IsVariableNameValid(rows[i]["Name"] + num))
-                        KmpsDoc.D71.Variable[false, rows[i]["Name"] + num].Delete();
-            });
-
-        }
-
-        private static DataSet comboDataSet(string sqlCmd, string TableName)
-        {
-            DataSet ds = new DataSet();
-
-            string sqlCon = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\DefaultValue.mdf;Integrated Security=True";
-
-            using (SqlConnection sqlConnection = new SqlConnection(sqlCon))
-            {
-                SqlDataAdapter da = new SqlDataAdapter(sqlCmd, sqlConnection);
-                sqlConnection.Open();
-                da.Fill(ds, TableName);
-
-                sqlConnection.Close();
-            }
-            return ds;
-        }
-
-        //Записываем значение переменной
-        public static async Task<bool> UpdateAsync(string name, double value, string index, bool dim = false)
-        {
-            if (KmpsDoc.D71 != null)
-                if (!KmpsDoc.D71.IsVariableNameValid(name + index))
-                {
-                    IVariable7 var = KmpsDoc.D71.Variable[false, name + index];
-                    if (var != null) var.Value = value;
-                    KmpsDoc.D71.UpdateVariables();
-                }
-            return true;
-        }
-        //Добавляем в переменную
-        public static async Task<bool> Add(string name, double value, string index)
-        {
-                if (KmpsDoc.D71 != null)
-                    if (!KmpsDoc.D71.IsVariableNameValid(name + index))
-                    {
-                        IVariable7 var = KmpsDoc.D71.Variable[false, name + index];
-                        var.Value += value;
-                        KmpsDoc.D71.UpdateVariables();
-                    }
-                return true;
-        }
-
-        //Записываем комментарий к переменной
-        public static async Task UpdateNote(string name, string value, string index)
+        public async Task RemoveAsync(string name, string index)
         {
             await Task.Factory.StartNew(() =>
-            {
-                if (KmpsDoc.D71 != null)
-                    if (!KmpsDoc.D71.IsVariableNameValid(name + index))
-                    {
-                        IVariable7 var = KmpsDoc.D71.Variable[false, name + index];
-                        if (var != null)
-                            var.Note = value;
-                        KmpsDoc.D71.UpdateVariables();
-                    }
-            });
+             {
+                 if (!this._doc.D71.IsVariableNameValid(name + index))
+                     this._doc.D71.Variable[false, name + index].Delete();
+             });
 
         }
-        //Получить перменную
-        public static double Give(string name, string index)
+
+        public IVariable7 Variable(string Name, string Index, bool External = false)
         {
-            if (KmpsDoc.D71 != null)
-            {
-                if (!KmpsDoc.D71.IsVariableNameValid(name + index))
-                {
-                    IVariable7 var = KmpsDoc.D71.Variable[false, name + index];
-                     if (var != null) return var.Value;
-                }
-                return 0;
-            }
-            else return 0;
+            return this._doc.D71.Variable[External, Name + Index];
         }
-        //Получить коммент к переменной
-        public static string GiveNote(string name, string index)
+
+        public bool IsVariableNameValid(string Name)
         {
-            if (KmpsDoc.D71 != null)
-            {
-                if (!KmpsDoc.D71.IsVariableNameValid(name + index))
-                {
-                    IVariable7 var = KmpsDoc.D71.Variable[false, name + index];
-                    return var.Note;
-                }
-                return string.Empty;
-            }
-            else return null;
+            return this._doc.D71.IsVariableNameValid(Name);
+        }
+
+            
+        //Добавляем в переменную
+
+        public static async void SetVarToUIElement(NotifyVariable variable, Control UIE, DependencyProperty dependencyProperty, string param)
+        {
+            Binding binding = new Binding { Source = variable, Path = new PropertyPath(param), Mode = BindingMode.TwoWay };
+            UIE.SetBinding(dependencyProperty, binding);
         }
     }
+
+    public struct VariableStruct
+    {
+        public string Name;
+        public double Value;
+        public string Note;
+        public bool Base;
+        public bool Info;
+    }
+
 }

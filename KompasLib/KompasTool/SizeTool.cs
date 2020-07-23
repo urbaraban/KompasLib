@@ -88,7 +88,7 @@ namespace KompasLib.Tools
         /// Описывает фигуру координатами
         /// </summary>
         /// <returns></returns>
-        public async void Coordinate(string index, double width, double CoordDopusk, double sizeText)
+        public async void Coordinate(double width, double CoordDopusk, double sizeText)
         {
             KmpsAppl.Doc.GetChooseContainer().UnchooseAll();
 
@@ -1268,7 +1268,7 @@ namespace KompasLib.Tools
             {
                 foreach (IParametriticConstraint constraint in drawing1.Constraints)
                     if (constraint.ConstraintType == ksConstraintTypeEnum.ksCDimWithVariable)
-                        await KVariable.UpdateAsync(constraint.Variable, VariableValue, string.Empty);
+                        KmpsAppl.Doc.Var.Variable(constraint.Variable, string.Empty).Value = VariableValue;
             }
             else
             {
@@ -1277,13 +1277,13 @@ namespace KompasLib.Tools
         }
 
         //Меняет параметр в размере
-        public static double ReturnValVariableDim(IDrawingObject1 drawing1)
+        public static IVariable7 ReturnValVariableDim(IDrawingObject1 drawing1)
         {
             if (drawing1.Constraints != null)
                 foreach (IParametriticConstraint constraint in drawing1.Constraints)
                     if (constraint.ConstraintType == ksConstraintTypeEnum.ksCDimWithVariable)
-                        return KVariable.Give(constraint.Variable, string.Empty);
-            return 0;
+                        return KmpsAppl.Doc.Var.Variable(constraint.Variable, string.Empty);
+            return null;
         }
 
         //Соединяет две линии

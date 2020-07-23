@@ -5,9 +5,10 @@ using Kompas6Constants;
 using KompasLib.Event;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-
+using System.Windows.Documents;
 
 namespace KompasLib.Tools
 {
@@ -25,9 +26,6 @@ namespace KompasLib.Tools
         private static IProgressBarIndicator progressBar;
         private static KmpsDoc doc;
 
-        private static bool closeDocChek;
-        private static int closeDocValue;
-
         //
         //public
         //
@@ -37,6 +35,8 @@ namespace KompasLib.Tools
 
         //Отключились
         public static event EventHandler<bool> ConnectBoolEvent;
+
+        public static List<VariableStruct> VarStruc = new List<VariableStruct>();
 
 
         public static KmpsDoc Doc

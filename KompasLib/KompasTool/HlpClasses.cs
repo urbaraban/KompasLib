@@ -42,7 +42,7 @@ namespace KompasLib.KompasTool
         public class Factura
         {
             public string Name { get; set; }
-            public Int32 Reference { get; set; }
+            public double Reference { get; set; }
 
             public Int32 NumberPP { get; set; }
             
@@ -60,7 +60,7 @@ namespace KompasLib.KompasTool
         public class FacturaColor
         {
             public string Name { get; set; }
-            public Int32 Reference { get; set; }
+            public double Reference { get; set; }
 
             public Int32 NumberPP { get; set; }
 

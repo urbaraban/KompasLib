@@ -1262,7 +1262,7 @@ namespace KompasLib.Tools
         }
 
         //Меняет параметр в размере
-        public async static void SetValToVariableDim(IDrawingObject1 drawing1, double VariableValue)
+        public static void SetValToVariableDim(IDrawingObject1 drawing1, double VariableValue)
         {
             if (drawing1.Constraints != null)
             {

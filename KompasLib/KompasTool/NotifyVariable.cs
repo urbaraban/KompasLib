@@ -48,6 +48,7 @@ namespace KompasLib.KompasTool
             if (Doc.D71.IsVariableNameValid(Name + Index))
             {
                 this._variable7 = Doc.D71.AddVariable(Name + Index, DefValue, DefNote);
+                this._variable7.Note = DefNote;
             }
             else
             {

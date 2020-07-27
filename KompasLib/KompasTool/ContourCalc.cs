@@ -129,11 +129,11 @@ namespace KompasLib.KompasTool
                                 PolyLineSegment polyLineSegment = new PolyLineSegment();
 
                                 if (i == 0)
-                                    pathFigure.StartPoint = new Point(arrayCurve[0] - Offcet.X, arrayCurve[1] - Offcet.Y);
+                                    pathFigure.StartPoint = new Point(arrayCurve[0] - Offcet.X, -arrayCurve[1] + Offcet.Y);
 
                                 for (int j = 2; j < arrayCurve.Length; j += 2)
                                 {
-                                    polyLineSegment.Points.Add(new Point(arrayCurve[j] - Offcet.X, arrayCurve[j + 1] - Offcet.Y));
+                                    polyLineSegment.Points.Add(new Point(arrayCurve[j] - Offcet.X, -arrayCurve[j + 1] + Offcet.Y));
                                 }
                                 pathFigure.Segments.Add(polyLineSegment);
                                 break;

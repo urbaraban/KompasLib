@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Windows;
 using System.Windows.Documents;
 
 namespace KompasLib.Tools
@@ -93,24 +94,35 @@ namespace KompasLib.Tools
                 {
                     kompasAPI = (KompasObject)Marshal.GetActiveObject(progId);
                 }
-                catch { }
+                catch (InvalidCastException e)
+                {
+                    MessageBox.Show(e.Message);
+                    return false;
+                }
 
                 if (kompasAPI != null)
                 {
-                    kompasAPI.Visible = true;
-                    kompasAPI.ActivateControllerAPI();
-                    
-                    appl = (IApplication)kompasAPI.ksGetApplication7();
-                    if (appl == null)
-                        return false;
-
-                    if (ConnectBoolEvent != null)
-                    ConnectBoolEvent(null, true);
-
-                    if (!BaseEvent.FindEvent(typeof(ApplicationEvent), null, -1))
+                    try
                     {
-                        ApplicationEvent aplEvent = new ApplicationEvent(kompasAPI);
-                        aplEvent.Advise();
+                        kompasAPI.Visible = true;
+                        kompasAPI.ActivateControllerAPI();
+
+                        appl = (IApplication)kompasAPI.ksGetApplication7();
+                        if (appl == null)
+                            return false;
+
+                        if (ConnectBoolEvent != null)
+                            ConnectBoolEvent(null, true);
+
+                        if (!BaseEvent.FindEvent(typeof(ApplicationEvent), null, -1))
+                        {
+                            ApplicationEvent aplEvent = new ApplicationEvent(kompasAPI);
+                            aplEvent.Advise();
+                        }
+                    }
+                    catch (InvalidCastException e)
+                    {
+                        MessageBox.Show(e.Message);
                     }
                 }
             }

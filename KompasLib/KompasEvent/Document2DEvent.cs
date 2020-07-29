@@ -16,7 +16,7 @@ namespace KompasLib.Event
 {
 	public class Document2DEvent : BaseEvent, ksDocument2DNotify
 	{
-        public Document2DEvent(object obj, object doc, bool selfAdvise)
+        public Document2DEvent(object obj, object doc)
             : base(obj, typeof(ksDocument2DNotify).GUID, doc,
             -1)
         { }

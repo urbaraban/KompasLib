@@ -61,8 +61,7 @@ namespace KompasLib.Event
             string result = string.Empty;
             if (m_Doc != null)
             {
-                ksDocument2D doc2d = m_Doc as ksDocument2D;
-                if (doc2d != null)
+                if(m_Doc is ksDocument2D doc2d)
                 {
                     ksDocumentParam docPar = KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_DocumentParam) as ksDocumentParam;
                     doc2d.ksGetObjParam(doc2d.reference, docPar, ldefin2d.ALLPARAM);
@@ -70,8 +69,7 @@ namespace KompasLib.Event
                 }
                 else
                 {
-                    ksDocument3D doc3d = m_Doc as ksDocument3D;
-                    if (doc3d != null)
+                    if(m_Doc is ksDocument3D doc3d)
                     {
                         result = doc3d.fileName;
                     }
@@ -86,8 +84,7 @@ namespace KompasLib.Event
                         }
                         else
                         {
-                            ksDocumentTxt txtDoc = m_Doc as ksDocumentTxt;
-                            if (txtDoc != null)
+                            if (m_Doc is ksDocumentTxt txtDoc)
                             {
                                 ksTextDocumentParam docPar = KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_TextDocumentParam) as ksTextDocumentParam;
                                 txtDoc.ksGetObjParam(spcDoc.reference, txtDoc, ldefin2d.ALLPARAM);
@@ -107,8 +104,7 @@ namespace KompasLib.Event
             // Подписаться на получение событий
             if (m_Container != null)
             {
-                IConnectionPointContainer cpContainer = m_Container as IConnectionPointContainer;
-                if (cpContainer != null)
+                if(m_Container is IConnectionPointContainer cpContainer)
                 {
                     cpContainer.FindConnectionPoint(ref m_Events, out m_ConnPt);
                     if (m_ConnPt != null)

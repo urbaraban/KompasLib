@@ -9,12 +9,19 @@
 using Kompas6API5;
 using Kompas6API7;
 using KompasLib.Tools;
+using System;
 using System.Threading;
 
 namespace KompasLib.Event
 {
     public class ApplicationEvent : BaseEvent, ksKompasObjectNotify
     {
+        public event EventHandler<object> OpenedDoc;
+        public event EventHandler<object> CreatedDoc;
+        public event EventHandler<object> ChangeDoc;
+        public event EventHandler<Tuple<int, bool>> EvKeyUp;
+        public event EventHandler DisconnectDoc;
+
         public ApplicationEvent(object obj)
           : base(obj, typeof(ksKompasObjectNotify).GUID,
           null, -1)
@@ -26,10 +33,7 @@ namespace KompasLib.Event
         {
             // Самоудаление
             TerminateEvents();
-            KmpsAppl.KompasAPI = null;
-            Thread thread = new Thread(KmpsAppl.DisconnectKmps);
-            thread.IsBackground = true;
-            thread.Start(); 
+            DisconnectDoc?.Invoke(this, null);
             return true;
         }
 
@@ -66,9 +70,7 @@ namespace KompasLib.Event
         // koActiveDocument - Переключение на другой активный документ
         public bool ChangeActiveDocument(object newDoc, int docType)
         {
-            Thread thread = new Thread(KmpsAppl.SelectDoc);
-            thread.IsBackground = true;
-            thread.Start();
+            ChangeDoc?.Invoke(this, newDoc);
             return true;
         }
 
@@ -76,9 +78,7 @@ namespace KompasLib.Event
         // koCreateDocument - Документ создан
         public bool CreateDocument(object newDoc, int docType)
         {
-            Thread thread = new Thread(KmpsAppl.SelectDoc);
-            thread.IsBackground = true;
-            thread.Start();
+            CreatedDoc?.Invoke(this, newDoc);
             return true;
         }
 
@@ -86,9 +86,7 @@ namespace KompasLib.Event
         // koOpenDocumen - Документ открыт
         public bool OpenDocument(object newDoc, int docType)
         {
-            Thread thread = new Thread(KmpsAppl.SelectDoc);
-            thread.IsBackground = true;
-            thread.Start();
+            OpenedDoc?.Invoke(null, newDoc);
             return true;
         }
 
@@ -101,6 +99,7 @@ namespace KompasLib.Event
         // koKeyUp - Событие клавиатуры
         public bool KeyUp(ref int key, int flags, bool system)
         {
+            EvKeyUp?.Invoke(this, new Tuple<int, bool>(key, system));
             return true;
         }
 

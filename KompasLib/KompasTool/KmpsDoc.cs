@@ -26,13 +26,7 @@ namespace KompasLib.Tools
         private KmpsMacro macro;
         private KmpsAttr attr;
 
-
-
-
         public KVariable Var;
-
-        //Селектирован размер
-        public event EventHandler<object> SelectDimenetion;
 
         public SizeTool ST
         {
@@ -74,10 +68,9 @@ namespace KompasLib.Tools
                 else this.docPar.type = (short)DocType.lt_DocFragment;
 
                 this.macro = new KmpsMacro();
-                this.sizeTool = new SizeTool(this);
+                this.sizeTool = new SizeTool();
 
                 this.Var = new KVariable(this);
-
             }
         }
 
@@ -224,76 +217,7 @@ namespace KompasLib.Tools
         }
 
         //Меняет масштаб
-        public bool Mashtab(bool Cheked)
-        {
-            ILayer layer = KmpsAppl.Doc.Macro.HideLayer(99, true);
-            ISelectionManager selection = GetSelectContainer();
-            if (selection.SelectedObjects != null)
-            {
 
-                SelectConstraintDell(selection);
-
-                doc5.ksLayer(0);
-
-                if ((selection != null) && (selection.SelectedObjects != null))
-                {
-                    double koefX = 0, koefY = 0;
-
-                    if (Cheked == false)
-                    {
-                        koefX = (100 - this.Var.Variable("koefX", "", false).Value) / 100;
-                        koefY = (100 - this.Var.Variable("koefY", "").Value) / 100;
-                    }
-                    else
-                    {
-                        koefX = 100 / (100 - this.Var.Variable("koefX", "").Value);
-                        koefY = 100 / (100 - this.Var.Variable("koefY", "").Value);
-                    }
-
-
-                    IDrawingGroup TempGroup = (IDrawingGroup)KmpsAppl.KompasAPI.TransferReference(doc5.ksNewGroup(0), doc5.reference);
-
-                    // Получить массив объектов
-                    try
-                    {
-                        Array arrS = (Array)selection.SelectedObjects;
-                        // Если массив есть
-                        TempGroup.AddObjects(arrS);
-
-                    }
-                    catch
-                    {
-                        //если один объект
-                        object pObj = selection.SelectedObjects;
-                        TempGroup.AddObjects(pObj);
-                    }
-
-                    IDrawingContainer drawingContainer = GetDrawingContainer();
-
-                    //Добавляем макрообъекты
-                    foreach (object obj in drawingContainer.MacroObjects)
-                        TempGroup.AddObjects(obj);
-
-                    doc5.ksMtr(0, 0, 0, koefX, koefY);
-
-                    doc5.ksTransformObj(TempGroup.Reference);
-                    TempGroup.DetachObjects(TempGroup.Objects[0], true);
-
-                    //Удаляем область трансформирования
-                    doc5.ksDeleteMtr();
-
-                    macro.HideLayer(99, true);
-                }
-            }
-            return !Cheked;
-
-        }
-
-        public void ChangeSelectDimention(IDrawingObject DimObj)
-        {
-            if (SelectDimenetion != null)
-                SelectDimenetion(this, DimObj);
-        }
 
         public ILayer GiveLayer(int number)
         {
@@ -385,12 +309,6 @@ namespace KompasLib.Tools
                 }
             }
         }
-
-        //создаем имя для файла
- 
-
-
-
 
         public void CreateQrCode(string message, double scale, double x = 0, double y = 0)
         {

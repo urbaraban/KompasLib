@@ -40,7 +40,7 @@ namespace KompasLib.Tools
             
         //Добавляем в переменную
 
-        public static async void SetVarToUIElement(NotifyVariable variable, Control UIE, DependencyProperty dependencyProperty, IValueConverter converter, string param)
+        public static void SetVarToUIElement(NotifyVariable variable, Control UIE, DependencyProperty dependencyProperty, IValueConverter converter, string param)
         {
             Binding binding = new Binding { Source = variable, Path = new PropertyPath(param), Mode = BindingMode.TwoWay };
             if (converter != null) binding.Converter = converter;

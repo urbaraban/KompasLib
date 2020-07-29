@@ -14,8 +14,7 @@ namespace KompasLib.KompasTool
 
         public void OnPropertyChanged([CallerMemberName] string prop = "")
         {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(prop));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
 
         public string Name
@@ -54,6 +53,11 @@ namespace KompasLib.KompasTool
             {
                 this._variable7 = Doc.D71.Variable[Exteral, Name + Index];
             }
+        }
+
+        public NotifyVariable(IVariable7 variable7)
+        {
+                this._variable7 = variable7;
         }
 
         public void Delete()

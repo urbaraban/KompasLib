@@ -115,10 +115,12 @@ namespace KompasLib.KompasTool
                                 if (i == 0)
                                     pathFigure.StartPoint = new Point(contourArc.X1 - Offcet.X, -contourArc.Y1 + Offcet.Y);
 
+                                double RotateAngel = contourArc.Direction ? Math.Abs(contourArc.Angle1 + 360 - contourArc.Angle2) % 360 : Math.Abs(contourArc.Angle2 + 360 - contourArc.Angle1) % 360;
+
                                 pathFigure.Segments.Add(
                                                 new ArcSegment(
-                                                    new Point(contourArc.X3 - Offcet.X, -contourArc.Y3 + Offcet.Y),
-                                                new Size(contourArc.Radius, contourArc.Radius), contourArc.Angle1, false,
+                                                    new Point(contourArc.X2 - Offcet.X, -contourArc.Y2 + Offcet.Y),
+                                                new Size(contourArc.Radius, contourArc.Radius), RotateAngel, RotateAngel > 180,
                                                 contourArc.Direction ? SweepDirection.Clockwise : SweepDirection.Counterclockwise,
                                                 true));
 

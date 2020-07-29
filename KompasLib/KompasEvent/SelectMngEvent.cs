@@ -1,18 +1,17 @@
 ﻿using Kompas6API5;
-using Kompas6API7;
-using KompasLib.Event;
+
 using KompasLib.Tools;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace KompasLib.Event
 {
     public class SelectMngEvent : BaseEvent, ksSelectionMngNotify
     {
-        public SelectMngEvent(object obj, object doc, bool selfAdvise)
+        public event EventHandler<int> SelectedArray;
+        public event EventHandler<int> SelectedObject;
+
+        public SelectMngEvent(object obj, object doc)
             : base(obj, typeof(ksSelectionMngNotify).GUID, doc,
             -1)
         { }
@@ -26,16 +25,7 @@ namespace KompasLib.Event
             }
             catch
             {
-                IDrawingObject drawingObject = (IDrawingObject)KmpsAppl.KompasAPI.TransferReference((int)obj, KmpsAppl.Doc.D5.reference);
-                switch (drawingObject.DrawingObjectType)
-                {
-                    case Kompas6Constants.DrawingObjectTypeEnum.ksDrLDimension:
-                        KmpsAppl.Doc.ChangeSelectDimention(drawingObject);
-                        break;
-                    case Kompas6Constants.DrawingObjectTypeEnum.ksDrADimension:
-                        KmpsAppl.Doc.ChangeSelectDimention(drawingObject);
-                        break;
-                }
+                SelectedObject?.Invoke(this, (int)obj);
             }
             return true;
         }
@@ -51,6 +41,7 @@ namespace KompasLib.Event
         // ksmUnselectAll - Все объекты расселектированы
         public bool UnselectAll()
         {
+            SelectedObject?.Invoke(this, 0);
             return true;
         }
     }

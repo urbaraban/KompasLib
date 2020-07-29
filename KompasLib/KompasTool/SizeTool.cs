@@ -22,12 +22,12 @@ namespace KompasLib.Tools
         public static IDrawingGroup PhGroup;
 
         static ILineDimension firstDim = null;
-        static List<ILineSegment> lastLine = new List<ILineSegment>();
+        static readonly List<ILineSegment> lastLine = new List<ILineSegment>();
 
         static int[] YesType = { 1, 2, 3, 8, 26, 28, 31, 32, 33, 34, 35, 36, 80 };
         static int[] DimType = { 9, 10, 13, 14, 15, 43 };
 
-        public SizeTool(KmpsDoc DOC)
+        public SizeTool()
         {
 
         }
@@ -50,33 +50,33 @@ namespace KompasLib.Tools
                 ILineDimensions lineDimension = (ILineDimensions)KmpsAppl.Doc.GetSymbols2DContainer().LineDimensions;
 
                 var result = await Task<List<List<ComboData>>>.Factory.StartNew(() =>
+            {
+                for (int i = 0; i < lineDimension.Count; i++)
                 {
-                    for (int i = 0; i < lineDimension.Count; i++)
+                    ILineDimension dimension = lineDimension.LineDimension[i];
+                    IDimensionText dimensionText = (IDimensionText)dimension;
+                    if (dimensionText.Brackets == ksDimensionTextBracketsEnum.ksDimBracketsOff)
                     {
-                        ILineDimension dimension = lineDimension.LineDimension[i];
-                        IDimensionText dimensionText = (IDimensionText)dimension;
-                        if (dimensionText.Brackets == ksDimensionTextBracketsEnum.ksDimBracketsOff)
-                        {
-                            IDrawingObject1 object1 = (IDrawingObject1)dimension;
-                            if ((object1 != null) && (object1.Constraints != null))
-                                foreach (IParametriticConstraint constraint in object1.Constraints) //перебираем ограничение
+                        IDrawingObject1 object1 = (IDrawingObject1)dimension;
+                        if ((object1 != null) && (object1.Constraints != null))
+                            foreach (IParametriticConstraint constraint in object1.Constraints) //перебираем ограничение
                                     if (constraint.ConstraintType == ksConstraintTypeEnum.ksCDimWithVariable) //и добавляем только с параметром
                                         comboDatas[0].Add(new ComboData("Размер " + i, dimension.Reference, comboDatas[0].Count));
-                        }
+                    }
+                    else
+                    {
+                        if (dimensionText.Brackets == ksDimensionTextBracketsEnum.ksDimBrackets)
+                            comboDatas[1].Add(new ComboData("Размер " + i, dimension.Reference, comboDatas[1].Count));
                         else
-                        {
-                            if (dimensionText.Brackets == ksDimensionTextBracketsEnum.ksDimBrackets)
-                                comboDatas[1].Add(new ComboData("Размер " + i, dimension.Reference, comboDatas[1].Count));
-                            else
-                                comboDatas[2].Add(new ComboData("Размер " + i, dimension.Reference, comboDatas[2].Count));
-                        }
-
+                            comboDatas[2].Add(new ComboData("Размер " + i, dimension.Reference, comboDatas[2].Count));
                     }
 
-                    ChangeListDimention(this, comboDatas);
+                }
 
-                    return comboDatas;
-                });
+                ChangeListDimention(this, comboDatas);
+
+                return comboDatas;
+            });
             }
 
             return null;
@@ -106,7 +106,7 @@ namespace KompasLib.Tools
                         int i = 0;
                         KmpsAppl.ProgressBar.Start(i, arrS.Length, "Скрываем размеры", true);
 
-                        bool tempflag = MessageBox.Show("Скрыть размеры?", "Внимание", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes ? true : false;
+                        bool tempflag = MessageBox.Show("Скрыть размеры?", "Внимание", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
                         foreach (object obj in arrS)
                         {
                             await Task.Run(() =>
@@ -354,8 +354,7 @@ namespace KompasLib.Tools
                                         {
                                             for (int k = 0; k < obj.PointsCount; k++)
                                             {
-                                                double tx, ty, tw;
-                                                obj.GetPoint(k, out tx, out ty, out tw);
+                                                obj.GetPoint(k, out double tx, out double ty, out double tw);
                                                 SetPoint(tx, ty);
                                             }
                                         }
@@ -811,7 +810,6 @@ namespace KompasLib.Tools
                         FixPoint1.Partner = obj;
                         FixPoint1.Index = 0;
                         FixPoint1.PartnerIndex = Index1;
-                        bool flag = FixPoint1.Create();
                     }
 
                     IParametriticConstraint FixPoint2 = Dim1.NewConstraint();
@@ -822,7 +820,6 @@ namespace KompasLib.Tools
                         FixPoint2.Partner = obj;
                         FixPoint2.Index = 1;
                         FixPoint2.PartnerIndex = Index2;
-                        bool flag = FixPoint2.Create();
                     }
 
                     //Накладываем на объект ограничение "Фиксированный размер"
@@ -1086,7 +1083,7 @@ namespace KompasLib.Tools
 
                         }
                     }
-                    bool flag = FixPoint1.Create();
+
 
                     //Фиксируем на объекте
                     IParametriticConstraint FixPoint2 = Dim1.NewConstraint();
@@ -1268,16 +1265,18 @@ namespace KompasLib.Tools
             {
                 foreach (IParametriticConstraint constraint in drawing1.Constraints)
                     if (constraint.ConstraintType == ksConstraintTypeEnum.ksCDimWithVariable)
-                        KmpsAppl.Doc.Var.Variable(constraint.Variable, string.Empty).Value = VariableValue;
-            }
-            else
-            {
-
+                        if (KmpsAppl.Doc.Var.IsVariableNameValid(constraint.Variable) == false)
+                        {
+                            IVariable7 variable7 = KmpsAppl.Doc.Var.Variable(constraint.Variable, string.Empty, false);
+                            if (variable7 != null)
+                                variable7.Value = VariableValue;
+                            KmpsAppl.Doc.D71.UpdateVariables();
+                        }
             }
         }
 
         //Меняет параметр в размере
-        public static IVariable7 ReturnValVariableDim(IDrawingObject1 drawing1)
+        public IVariable7 GetObjectVariable(IDrawingObject1 drawing1)
         {
             if (drawing1.Constraints != null)
                 foreach (IParametriticConstraint constraint in drawing1.Constraints)
@@ -1339,7 +1338,7 @@ namespace KompasLib.Tools
             }
         }
         //Инвертирует размеры на координатном раскрое
-        public void InvertPointCoord(bool xinvert, double textSize)
+        public void InvertPointCoord(bool xinvert)
         {
             KmpsAppl.someFlag = false;
             ISelectionManager selection = KmpsAppl.Doc.GetSelectContainer();
@@ -1596,7 +1595,7 @@ namespace KompasLib.Tools
             KmpsAppl.someFlag = true;
         }
 
-        //Создает или обновляет размер
+        //Создает или обновляет линию
         public async void UpdateOrMakeLine(double Value, bool Adding, bool single, dynamic objets)
         {
             KmpsAppl.someFlag = false;
@@ -1674,20 +1673,21 @@ namespace KompasLib.Tools
                 }
                 if (lineSegment.Update())
                 {
-                    var tasks = new List<Task<object>>();
-
-                    tasks.Add(Task<object>.Run(() =>
+                    var tasks = new List<Task<object>>
                     {
-                        return (object)CheckOrMakePoint(lineSegment, lineSegment.X1, lineSegment.Y1, 0, true); //поинт 1
-                    }));
-                    tasks.Add(Task<object>.Run(() =>
-                    {
-                        return (object)CheckOrMakePoint(lineSegment, lineSegment.X2, lineSegment.Y2, 1, true); //поинт 2
-                    }));
-                    tasks.Add(Task<object>.Run(() =>
-                    {
-                        return (object)SetLineDim(lineSegment.X1, lineSegment.Y1, lineSegment.X2, lineSegment.Y2, 20, true); ; //Размер 1
-                    }));
+                        Task<object>.Run(() =>
+                        {
+                            return (object)CheckOrMakePoint(lineSegment, lineSegment.X1, lineSegment.Y1, 0, true); //поинт 1
+                    }),
+                        Task<object>.Run(() =>
+                        {
+                            return (object)CheckOrMakePoint(lineSegment, lineSegment.X2, lineSegment.Y2, 1, true); //поинт 2
+                    }),
+                        Task<object>.Run(() =>
+                        {
+                            return (object)SetLineDim(lineSegment.X1, lineSegment.Y1, lineSegment.X2, lineSegment.Y2, 20, true); ; //Размер 1
+                    })
+                    };
 
 
                     Task.WhenAll(tasks).Wait();
@@ -1745,7 +1745,9 @@ namespace KompasLib.Tools
                     await UpdateObjects(objets);
             }
             KmpsAppl.someFlag = true;
- 
+
+            KmpsAppl.ZoomAll();
+
             //апдейт переменной
             async Task UpdateObjects(dynamic objects)
             {

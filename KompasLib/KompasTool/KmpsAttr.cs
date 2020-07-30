@@ -7,10 +7,12 @@ namespace KompasLib.Tools
 {
     public class KmpsAttr
     {
+        private KmpsAppl kmpsAppl;
         private ksAttributeObject attributeObject;
 
-        public KmpsAttr()
+        public KmpsAttr(KmpsAppl kmps)
         {
+            this.kmpsAppl = kmps;
             attributeObject = (ksAttributeObject)KmpsAppl.KompasAPI.GetAttributeObject();
         }
 
@@ -59,7 +61,7 @@ namespace KompasLib.Tools
                     arr.ksAddArrayItem(-1, item);
                 }
 
-                if (KmpsAppl.Doc.D5.ksExistObj(pObj) != 0)
+                if (this.kmpsAppl.Doc.D5.ksExistObj(pObj) != 0)
                 {
                     double numb = GiveIDNameTypeAttr("ForMacroParam");
                     return attributeObject.ksCreateAttr(pObj, attrPar, numb, null);

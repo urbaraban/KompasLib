@@ -12,9 +12,12 @@ namespace KompasLib.Tools
 {
     public class KmpsMacro
     {
-        public KmpsMacro()
-        {
 
+        private KmpsAppl kmpsAppl;
+
+        public KmpsMacro(KmpsAppl kmps)
+        {
+            this.kmpsAppl = kmps;
         }
 
         //
@@ -23,24 +26,24 @@ namespace KompasLib.Tools
         //Создание
         public IMacroObject MakeCeilingMacro(string index)
         {
-            KmpsAppl.Doc.D5.ksLayer(99);
+            this.kmpsAppl.Doc.D5.ksLayer(99);
             IMacroObject pMacroObj;
-            ILayer layer = HideLayer(99, true);
-            KmpsAppl.Doc.D5.ksMacro(1);
-            reference macroRef = KmpsAppl.Doc.D5.ksEndObj();
-            pMacroObj = (IMacroObject)KmpsAppl.KompasAPI.TransferReference(macroRef, KmpsAppl.Doc.D5.reference);
+            HideLayer(99, true);
+            this.kmpsAppl.Doc.D5.ksMacro(1);
+            reference macroRef = this.kmpsAppl.Doc.D5.ksEndObj();
+            pMacroObj = (IMacroObject)KmpsAppl.KompasAPI.TransferReference(macroRef, this.kmpsAppl.Doc.D5.reference);
             pMacroObj.Name = "Ceiling:" + index;
             pMacroObj.Update();
-            KmpsAppl.Doc.D5.ksLayer(0);
+            this.kmpsAppl.Doc.D5.ksLayer(0);
             return pMacroObj;
         }
 
         //хуй знает зачем я теперь получаю слой, но эта функция его скрывает.
-        public ILayer HideLayer(int number, bool status)
+        public void HideLayer(int number, bool status)
         {
             if (KmpsAppl.KompasAPI != null)
             {
-                IViewsAndLayersManager ViewsAndLayersManager = KmpsAppl.Doc.D7.ViewsAndLayersManager;
+                IViewsAndLayersManager ViewsAndLayersManager = this.kmpsAppl.Doc.D7.ViewsAndLayersManager;
                 IViews Views = ViewsAndLayersManager.Views;
                 //получаем текущий вид
                 IView CurView = Views.ActiveView;
@@ -51,9 +54,8 @@ namespace KompasLib.Tools
                     layer.Visible = !status;
                     layer.Update();
                 }
-                return layer;
+                return;
             }
-            return null;
         }
 
         //Добавление в макрообъект
@@ -61,7 +63,7 @@ namespace KompasLib.Tools
         {
             if (KmpsAppl.KompasAPI != null)
             {
-                object pDrawObj = (object)KmpsAppl.KompasAPI.TransferReference(refObj, KmpsAppl.Doc.D5.reference);
+                object pDrawObj = (object)KmpsAppl.KompasAPI.TransferReference(refObj, this.kmpsAppl.Doc.D5.reference);
                 if (pDrawObj != null)
                 {
                     IMacroObject pMacroObj = FindCeilingMacro(index);
@@ -79,20 +81,23 @@ namespace KompasLib.Tools
             if (KmpsAppl.KompasAPI != null)
             {
                 IMacroObject pMacroObj = null;
-                IDrawingContainer drawingContainer = KmpsAppl.Doc.GetDrawingContainer();
-                try
+                IDrawingContainer drawingContainer = this.kmpsAppl.Doc.GetDrawingContainer();
+                if (drawingContainer != null)
                 {
-                    MacroObjects array = (MacroObjects)drawingContainer.MacroObjects;
+                    try
+                    {
+                        MacroObjects array = (MacroObjects)drawingContainer.MacroObjects;
 
-                    foreach (IMacroObject obj in array)
-                        if (obj.Name == "Ceiling:" + index) return obj;
+                        foreach (IMacroObject obj in array)
+                            if (obj.Name == "Ceiling:" + index) return obj;
+                    }
+                    catch
+                    {
+                        MacroObject pObj = (MacroObject)drawingContainer.MacroObjects;
+                        pMacroObj = (IMacroObject)pObj;
+                    }
+                    return pMacroObj;
                 }
-                catch
-                {
-                    MacroObject pObj = (MacroObject)drawingContainer.MacroObjects;
-                    pMacroObj = (IMacroObject)pObj;
-                }
-                return pMacroObj;
             }
             return null;
         }
@@ -100,7 +105,7 @@ namespace KompasLib.Tools
         //Удаление макрообъекта
         public bool RemoveCeilingMacro(string index)
         {
-            if (KmpsAppl.Doc.D5 != null)
+            if (this.kmpsAppl.Doc.D5 != null)
             {
                 IMacroObject pMacroObj = FindCeilingMacro(index);
                 if (pMacroObj != null) return pMacroObj.Delete();
@@ -113,7 +118,7 @@ namespace KompasLib.Tools
         public IContour GiveContour(reference refContour)
         {
             IContour contour = null;
-            IDrawingObject pDrawObj = (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(refContour, KmpsAppl.Doc.D5.reference);
+            IDrawingObject pDrawObj = (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(refContour, this.kmpsAppl.Doc.D5.reference);
             if (pDrawObj != null)
             {
                 if ((int)pDrawObj.DrawingObjectType == 26)
@@ -140,7 +145,7 @@ namespace KompasLib.Tools
             ksIterator ksIterator = (ksIterator)KmpsAppl.KompasAPI.GetIterator();
             ksIterator.ksCreateIterator(ldefin2d.ALL_OBJ, refMacro);
             reference refObj = ksIterator.ksMoveIterator("F");
-            KmpsAppl.Doc.D5.ksDeleteObj(refObj);
+            this.kmpsAppl.Doc.D5.ksDeleteObj(refObj);
             ksIterator.ksDeleteIterator();
         }
 

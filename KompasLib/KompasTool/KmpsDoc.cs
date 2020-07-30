@@ -16,114 +16,76 @@ namespace KompasLib.Tools
 {
     public class KmpsDoc
     {
-        private ksDocument2D doc5;
-        private IKompasDocument2D doc7;
-        private IKompasDocument2D1 doc71;
-        private IKompasDocument1 doc1;
-        private ksDocumentParam docPar;
-        private IDocuments documents7;
-        private SizeTool sizeTool;
-        private KmpsMacro macro;
-        private KmpsAttr attr;
+        private KmpsAppl kmpsAppl;
 
         public KVariable Var;
 
-        public SizeTool ST
-        {
-            get => sizeTool;
-        }
+        public SizeTool ST { get; }
 
-        public KmpsAttr Attribute
-        {
-            get => attr;
-        }
+        public KmpsAttr Attribute { get; }
 
-        public KmpsDoc()
+
+        public IKompasDocument2D D7 { get; set; }
+
+        public IKompasDocument1 D1 { get; }
+
+
+        public IKompasDocument2D1 D71 { get; }
+
+        public ksDocument2D D5 { get; set; }
+
+        public IDocuments Documents7 { get; set; }
+
+        public ksDocumentParam DocPar { get; set; }
+
+        public KmpsMacro Macro { get; set; }
+
+
+        public KmpsDoc(KmpsAppl kmps)
         {
+            this.kmpsAppl = kmps;
             if (KmpsAppl.KompasAPI != null)
             {
-                this.documents7 = KmpsAppl.Appl.Documents;
+                this.Documents7 = KmpsAppl.Appl.Documents;
 
                 // Получаем интерфейс активного документа 2D в API7
-                this.doc7 = (IKompasDocument2D)KmpsAppl.Appl.ActiveDocument;
+                this.D7 = (IKompasDocument2D)KmpsAppl.Appl.ActiveDocument;
 
-                if (doc7 == null)
+                if (D7 == null)
                     return;
 
-                this.doc71 = (IKompasDocument2D1)KmpsAppl.Appl.ActiveDocument;
-                this.doc1 = (IKompasDocument1)KmpsAppl.Appl.ActiveDocument;
+                this.D71 = (IKompasDocument2D1)KmpsAppl.Appl.ActiveDocument;
+                this.D1 = (IKompasDocument1)KmpsAppl.Appl.ActiveDocument;
 
-                attr = new KmpsAttr();
+                Attribute = new KmpsAttr(this.kmpsAppl);
 
-                attr.FuncAttrType();
+                Attribute.FuncAttrType();
 
                 // Получаем интерфейс активного документа 2D в API5
-                doc5 = (ksDocument2D)KmpsAppl.KompasAPI.ActiveDocument2D();
-                if (doc5 == null)
+                D5 = (ksDocument2D)KmpsAppl.KompasAPI.ActiveDocument2D();
+                if (D5 == null)
                     return;
 
-                this.docPar = (ksDocumentParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_DocumentParam);
-                if (docPar == null)
+                this.DocPar = (ksDocumentParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_DocumentParam);
+                if (DocPar == null)
                     return;
-                else this.docPar.type = (short)DocType.lt_DocFragment;
+                else this.DocPar.type = (short)DocType.lt_DocFragment;
 
-                this.macro = new KmpsMacro();
-                this.sizeTool = new SizeTool();
+                this.Macro = new KmpsMacro(this.kmpsAppl);
+                this.ST = new SizeTool(this);
 
                 this.Var = new KVariable(this);
             }
         }
 
 
-        public IKompasDocument2D D7
-        {
-            get => this.doc7;
-            set => this.doc7 = value;
-        }
-
-        public IKompasDocument1 D1
-        {
-            get => this.doc1;
-            set => this.doc1 = value;
-        }
-
-
-        public IKompasDocument2D1 D71
-        {
-            get => this.doc71;
-        }
-
-        public ksDocument2D D5
-        {
-            get => this.doc5;
-            set => this.doc5 = value;
-        }
-
-        public IDocuments Documents7
-        {
-            get => documents7;
-            set => documents7 = value;
-        }
-
-        public ksDocumentParam DocPar
-        {
-            get => docPar;
-            set => docPar = value;
-        }
-
-        public KmpsMacro Macro
-        {
-            get => macro;
-            set => macro = value;
-        }
-
         //Получает только селектированные объекты
         public ISelectionManager GetSelectContainer()
         {
-            if (doc71 != null)
+            if (D71 != null)
             {
                 // Получить менеджер видов и слоев
-                ISelectionManager mng = doc71.SelectionManager;
+                ISelectionManager mng = D71.SelectionManager;
 
                 if (mng != null)
                     return mng;
@@ -134,10 +96,10 @@ namespace KompasLib.Tools
         //Получает только выделенные объекты
         public IChooseManager GetChooseContainer()
         {
-            if (doc71 != null)
+            if (D71 != null)
             {
                 // Получить менеджер видов и слоев
-                IChooseManager mng = doc71.ChooseManager;
+                IChooseManager mng = D71.ChooseManager;
 
                 if (mng != null)
                 {
@@ -150,10 +112,10 @@ namespace KompasLib.Tools
         //Получает все объекты из документа
         public IDrawingContainer GetDrawingContainer()
         {
-            if (doc7 != null)
+            if (D7 != null)
             {
                 // Получить менеджер видов и слоев
-                IViewsAndLayersManager mng = doc7.ViewsAndLayersManager;
+                IViewsAndLayersManager mng = D7.ViewsAndLayersManager;
 
                 if (mng != null)
                 {
@@ -183,10 +145,10 @@ namespace KompasLib.Tools
         // ---
         public ISymbols2DContainer GetSymbols2DContainer()
         {
-            if (doc7 != null)
+            if (D7 != null)
             {
                 // Получим менеджер для работы с видами и слоями
-                ViewsAndLayersManager viewsMng = doc7.ViewsAndLayersManager;
+                ViewsAndLayersManager viewsMng = D7.ViewsAndLayersManager;
 
                 if (viewsMng != null)
                 {
@@ -207,21 +169,14 @@ namespace KompasLib.Tools
         }
 
 
-        public void CloseDocOver(int value)
+        public IDrawingGroup GetDrawingGroup()
         {
-            while (documents7.Count > value)
-            {
-                IKompasDocument2D tempDoc = (IKompasDocument2D)documents7[0];
-                tempDoc.Close(DocumentCloseOptions.kdSaveChanges);
-            }
+            return  (IDrawingGroup)KmpsAppl.KompasAPI.TransferReference(this.D5.ksNewGroup(0), this.D5.reference);
         }
-
-        //Меняет масштаб
-
 
         public ILayer GiveLayer(int number)
         {
-            ViewsAndLayersManager ViewsMng = KmpsAppl.Doc.D7.ViewsAndLayersManager;
+            ViewsAndLayersManager ViewsMng = this.kmpsAppl.Doc.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
             IView view = views.ActiveView;
 
@@ -248,7 +203,7 @@ namespace KompasLib.Tools
 
         public void VisibleLayer(int number, bool visible)
         {
-            ViewsAndLayersManager ViewsMng = KmpsAppl.Doc.D7.ViewsAndLayersManager;
+            ViewsAndLayersManager ViewsMng = this.kmpsAppl.Doc.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
             IView view = views.ActiveView;
 
@@ -261,10 +216,10 @@ namespace KompasLib.Tools
             }
         }
 
-        public async static void LockedLayerAsync(int number, bool locked, bool inverse = false)
+        public async void LockedLayerAsync(int number, bool locked, bool inverse = false)
         {
             await Task.Run(() => { 
-            ViewsAndLayersManager ViewsMng = KmpsAppl.Doc.D7.ViewsAndLayersManager;
+            ViewsAndLayersManager ViewsMng = this.kmpsAppl.Doc.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
             IView view = views.ActiveView;
 
@@ -317,7 +272,7 @@ namespace KompasLib.Tools
                 ksRequestInfo info = (ksRequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
 
                 if ((x == 0) && (y == 0))
-                    KmpsAppl.Doc.D5.ksCursor(info, ref x, ref y, 0);
+                    this.kmpsAppl.Doc.D5.ksCursor(info, ref x, ref y, 0);
 
                 Bitmap bitmap = OnEncode(message);
                 string outputFileName = Path.GetTempFileName().Replace(".tmp", ".jpg");
@@ -331,7 +286,7 @@ namespace KompasLib.Tools
                         fs.Write(bytes, 0, bytes.Length);
                     }
                 }
-                IRasters rasters = KmpsAppl.Doc.GetDrawingContainer().Rasters;
+                IRasters rasters = this.kmpsAppl.Doc.GetDrawingContainer().Rasters;
                 IRaster raster = rasters.Add();
                 raster.FileName = outputFileName;
                 raster.SetPlacement(x, y - scale, 0, false);

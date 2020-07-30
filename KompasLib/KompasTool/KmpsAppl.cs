@@ -6,98 +6,94 @@ using KompasLib.Event;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace KompasLib.Tools
 {
-    public static class KmpsAppl
+    public class KmpsAppl : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public void OnPropertyChanged([CallerMemberName] string prop = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+        }
+
         #region Variable
         //
         //private
         //
 
-        private static KompasObject kompasAPI;
-        private static IApplication appl;
-        private static ksMathematic2D mat;
-        private static IPropertyManager propMng;
+        private static  ksMathematic2D mat;
+        private  IPropertyManager propMng;
         private static IProgressBarIndicator progressBar;
-        private static KmpsDoc doc;
+        private KmpsDoc doc;
 
         //
         //public
         //
 
         //Изменили документ
-        public static event EventHandler<KmpsDoc> ChangeDoc;
-        public static event EventHandler CreatedDoc;
-        public static event EventHandler OpenedDoc;
-
-        public static event EventHandler<object> CreatedObject;
-        public static event EventHandler<object> SelectedObject;
-        public static event EventHandler<Tuple<int, bool>> EventKeyUp;
+        public event EventHandler CreatedDoc;
+        public event EventHandler<object> CreatedObject;
+        public event EventHandler<object> SelectedObject;
+        public event EventHandler<Tuple<int, bool>> EventKeyUp;
 
         //Отключились
-        public static event EventHandler<bool> ConnectBoolEvent;
+        public  event EventHandler<bool> ConnectBoolEvent;
 
-
-        public static List<VariableStruct> VarStruc = new List<VariableStruct>();
-
-        public static KmpsDoc Doc
+        public KmpsDoc Doc
         {
-            get => doc;
-            set => doc = value;
+            get => this.doc;
+            set
+            {
+                this.doc = value;
+                OnPropertyChanged("Doc");
+            }
         }
 
-        public static bool someFlag = true;
+        public static  bool someFlag = true;
 
-        public static IApplication Appl
-        {
-            get => appl;
-            set => appl = value;
-        }
-
+        public static  IApplication Appl { get; set; }
         public static ksMathematic2D Mat
         {
             get => mat;
         }
 
-         public static IProgressBarIndicator ProgressBar
+         public static  IProgressBarIndicator ProgressBar
         {
-            get => appl.ProgressBarIndicator;
+            get => Appl.ProgressBarIndicator;
             set => progressBar = value;
         }
 
-        public static IPropertyManager PropMng
+        public  IPropertyManager PropMng
         {
             get => propMng;
             set => propMng = value;
         }
 
-        private static ArrayList eventList = new ArrayList();
-        public static ArrayList EventList
-        {
-            get => eventList;
-            set => eventList = value;
-        }
+        public static ArrayList EventList { get; set; } = new ArrayList();
 
-        public static KompasObject KompasAPI
-        {
-            get => kompasAPI;
-            set => kompasAPI = value;
-        }
+        public static  KompasObject KompasAPI { get; set; }
         #endregion
 
-        public static bool Connect() 
+        public KmpsAppl()
         {
-            if (kompasAPI == null)
+
+        }
+
+        public bool Connect() 
+        {
+            if (KmpsAppl.KompasAPI == null)
             {
                 string progId = "KOMPAS.Application.5";
                 try
                 {
-                    kompasAPI = (KompasObject)Marshal.GetActiveObject(progId);
+                    KmpsAppl.KompasAPI = (KompasObject)Marshal.GetActiveObject(progId);
                 }
                 catch (InvalidCastException e)
                 {
@@ -105,30 +101,32 @@ namespace KompasLib.Tools
                     return false;
                 }
 
-                if (kompasAPI != null)
+                if (KmpsAppl.KompasAPI != null)
                 {
                     try
                     {
-                        kompasAPI.Visible = true;
-                        kompasAPI.ActivateControllerAPI();
+                        KmpsAppl.KompasAPI.Visible = true;
+                        KmpsAppl.KompasAPI.ActivateControllerAPI();
 
-                        appl = (IApplication)kompasAPI.ksGetApplication7();
-                        if (appl == null)
+                        Appl = (IApplication)KmpsAppl.KompasAPI.ksGetApplication7();
+                        if (Appl == null)
                             return false;
 
-                        mat = (ksMathematic2D)kompasAPI.GetMathematic2D();
+                        mat = (ksMathematic2D)KmpsAppl.KompasAPI.GetMathematic2D();
 
                         ConnectBoolEvent?.Invoke(null, true);
 
                         if (!BaseEvent.FindEvent(typeof(ApplicationEvent), null, -1))
                         {
-                            ApplicationEvent aplEvent = new ApplicationEvent(kompasAPI);
+                            ApplicationEvent aplEvent = new ApplicationEvent(KmpsAppl.KompasAPI);
                             aplEvent.Advise();
                             aplEvent.OpenedDoc += AplEvent_OpenedDoc;
                             aplEvent.CreatedDoc += AplEvent_CreatedDoc;
                             aplEvent.ChangeDoc += AplEvent_ChangeDoc;
                             aplEvent.EvKeyUp += AplEvent_EvKeyUp;
                         }
+
+                        SelectDoc();
                     }
                     catch (InvalidCastException e)
                     {
@@ -136,31 +134,30 @@ namespace KompasLib.Tools
                     }
                 }
             }
-            return kompasAPI != null;
+            return KmpsAppl.KompasAPI != null;
         }
 
-        private static void AplEvent_EvKeyUp(object sender, Tuple<int, bool> e)
+        private  void AplEvent_EvKeyUp(object sender, Tuple<int, bool> e)
         {
             EventKeyUp?.Invoke(null, e);
         }
 
-        private static void AplEvent_ChangeDoc(object sender, object e)
+        private  void AplEvent_ChangeDoc(object sender, object e)
         {
             SelectDoc();
         }
 
-        private static void AplEvent_CreatedDoc(object sender, object e)
-        {
-            CreatedDoc?.Invoke(sender, null);
-        }
-
-        private static void AplEvent_OpenedDoc(object sender, object e)
+        private  void AplEvent_CreatedDoc(object sender, object e)
         {
             SelectDoc();
-            OpenedDoc?.Invoke(sender, null);
         }
 
-        public static bool OpenFile(string filepath)
+        private  void AplEvent_OpenedDoc(object sender, object e)
+        {
+            SelectDoc();
+        }
+
+        public  bool OpenFile(string filepath)
         {
             int type = KmpsAppl.KompasAPI.ksGetDocumentTypeByName(filepath);
             switch (type)
@@ -168,8 +165,8 @@ namespace KompasLib.Tools
 
                 case (int)DocType.lt_DocSheetStandart:  //2d документы
                 case (int)DocType.lt_DocFragment:
-                    KmpsAppl.Doc.D5 = (ksDocument2D)KmpsAppl.KompasAPI.Document2D();
-                    if (KmpsAppl.Doc.D5 != null)
+                    this.Doc.D5 = (ksDocument2D)KmpsAppl.KompasAPI.Document2D();
+                    if (this.Doc.D5 != null)
                         Process.Start(filepath);
                     return true;
 
@@ -182,38 +179,39 @@ namespace KompasLib.Tools
         }
         public static void ZoomAll()
         {
-            if (kompasAPI != null)
+            if (KmpsAppl.KompasAPI != null)
             {
-                IDocumentFrame documentFrame = appl.ActiveDocument.DocumentFrames[0];
+                IDocumentFrame documentFrame = Appl.ActiveDocument.DocumentFrames[0];
                 documentFrame.ZoomPrevNextOrAll(ZoomTypeEnum.ksZoomAll);
             }
         }
 
-        public static void SelectDoc()
+        public  void SelectDoc()
         {
-            if (kompasAPI != null)
+            if (KmpsAppl.KompasAPI != null)
             {
-                doc = new KmpsDoc();
-                if (doc.D5 != null)
-                {
-                    ChangeDoc?.Invoke(null, doc);
+                KmpsDoc tempDoc = new KmpsDoc(this);
 
+                if (tempDoc.D5 != null)
+                {
                     int[] YesType = { 1, 4, 9, 35, 27 };
 
                     for (int i = 0; i < YesType.Length; i++)
                     {
-                        if (!BaseEvent.FindEvent(typeof(DocumentEvent), doc, YesType[i]))
-                            AdviseDoc((Kompas6API5.ksDocumentFileNotify_Event)kompasAPI.ksGetDocumentByReference(doc.D5.reference), kompasAPI.ksGetDocumentType(doc.D5.reference), YesType[i]);
+                        if (!BaseEvent.FindEvent(typeof(DocumentEvent), tempDoc, YesType[i]))
+                            AdviseDoc((Kompas6API5.ksDocumentFileNotify_Event)KmpsAppl.KompasAPI.ksGetDocumentByReference(tempDoc.D5.reference), KmpsAppl.KompasAPI.ksGetDocumentType(tempDoc.D5.reference), YesType[i]);
                     }
-                }
+
+                    this.Doc = tempDoc;
+                }             
             }
         }
 
-        public static bool CreateDoc()
+        public  bool CreateDoc()
         {
-            if (KmpsAppl.kompasAPI != null)
+            if (KmpsAppl.KompasAPI != null)
             {
-                ksDocument2D doc2d = (ksDocument2D)kompasAPI.Document2D();
+                ksDocument2D doc2d = (ksDocument2D)KmpsAppl.KompasAPI.Document2D();
                 // создать новый документ
                 // первый параметр - тип открываемого файла
                 //  0 - лист чертежа
@@ -226,7 +224,7 @@ namespace KompasLib.Tools
                 // ф-ия возвращает HANDLE открытого документа
                 if (doc2d != null)
                 {
-                    ksDocumentParam docPar = (ksDocumentParam)kompasAPI.GetParamStruct((short)StructType2DEnum.ko_DocumentParam);
+                    ksDocumentParam docPar = (ksDocumentParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_DocumentParam);
 
                     if (docPar != null)
                     {
@@ -236,7 +234,9 @@ namespace KompasLib.Tools
                         docPar.author = Environment.UserName;
                         docPar.comment = "KPCm";
                         if (doc2d.ksCreateDocument(docPar))
+                        {
                             return true;
+                        }
                         else return false;
                     }
                 }
@@ -245,7 +245,7 @@ namespace KompasLib.Tools
         }
 
 
-        private static void AdviseDoc(object doc, int docType, int objType/*-1*/)
+        private  void AdviseDoc(object doc, int docType, int objType/*-1*/)
         {
             if (doc == null)
                 return;
@@ -263,7 +263,7 @@ namespace KompasLib.Tools
                     return;
             }
             else
-                kompasAPI.ksError("На события документа уже подписались");
+                KmpsAppl.KompasAPI.ksError("На события документа уже подписались");
 
             switch (docType)
             {
@@ -313,33 +313,32 @@ namespace KompasLib.Tools
                         }
                     }
                     break;
-
             }
         }
 
-        private static void SelEvent_SelectedObject(object sender, int e)
+        private  void SelEvent_SelectedObject(object sender, int e)
         {
-            SelectedObject?.Invoke(null, (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(e, KmpsAppl.Doc.D5.reference));
+            SelectedObject?.Invoke(null, (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference));
         }
 
-        private static void ObjEvent_OnCreatedObjectRef(object sender, int e)
+        private  void ObjEvent_OnCreatedObjectRef(object sender, int e)
         {
             if (KmpsAppl.someFlag)
             {
                 try
                 {
-                    CreatedObject?.Invoke(null, (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(e, KmpsAppl.Doc.D5.reference));
+                    CreatedObject?.Invoke(null, (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference));
                 }
                 catch { }
             }
         }
 
-        public static void DisconnectKmps()
+        public  void DisconnectKmps()
         {
-            if (kompasAPI != null)
+            if (KmpsAppl.KompasAPI != null)
             {
                 // принудительно зпрервать св¤зь с  омпас
-                Marshal.ReleaseComObject(kompasAPI);
+                Marshal.ReleaseComObject(KmpsAppl.KompasAPI);
                 ConnectBoolEvent?.Invoke(null, false);
             }
         }

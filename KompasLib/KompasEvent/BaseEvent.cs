@@ -9,9 +9,6 @@
 using Kompas6API5;
 
 using System;
-using System.Resources;
-using System.Diagnostics;
-using System.Collections;
 using System.Runtime.InteropServices.ComTypes;
 using Kompas6Constants;
 using KAPITypes;
@@ -30,7 +27,7 @@ namespace KompasLib.Event
         protected string m_LibName;
         protected string str = string.Empty;
 
-        public BaseEvent(object obj, Guid events, object doc, int objType
+        public BaseEvent( object obj, Guid events, object doc, int objType
             )
         {
             m_Cookie = 0;
@@ -39,7 +36,7 @@ namespace KompasLib.Event
             m_Doc = doc;
             m_ObjType = objType;
              m_ConnPt = null;
-
+   
             KmpsAppl.EventList.Add(this);
         }
 

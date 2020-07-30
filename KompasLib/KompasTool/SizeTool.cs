@@ -14,11 +14,13 @@ namespace KompasLib.Tools
 {
     public class SizeTool
     {
+        private KmpsDoc doc;
+
         private List<ComboData> forDimList = new List<ComboData>();
 
         public static object SelectObj;
         public static bool SelectPointFlag = false;
-        public static ksPhantom phtm = KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_Phantom);
+        public static ksPhantom phtm;
         public static IDrawingGroup PhGroup;
 
         static ILineDimension firstDim = null;
@@ -27,9 +29,10 @@ namespace KompasLib.Tools
         static int[] YesType = { 1, 2, 3, 8, 26, 28, 31, 32, 33, 34, 35, 36, 80 };
         static int[] DimType = { 9, 10, 13, 14, 15, 43 };
 
-        public SizeTool()
+        public SizeTool(KmpsDoc Doc)
         {
-
+            this.doc = Doc;
+            phtm = KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_Phantom);
         }
         public event EventHandler<List<List<ComboData>>> ChangeListDimention;
 
@@ -39,15 +42,17 @@ namespace KompasLib.Tools
         /// <returns></returns>
         public async Task<List<List<ComboData>>> GetLineDimentionListAsync()
         {
-            List<List<ComboData>> comboDatas = new List<List<ComboData>>();
-            comboDatas.Add(new List<ComboData>()); //лист просто размеров
-            comboDatas.Add(new List<ComboData>()); //лист свободных размеров
-            comboDatas.Add(new List<ComboData>()); //лист фиксированных размеров
+            List<List<ComboData>> comboDatas = new List<List<ComboData>>
+            {
+                new List<ComboData>(), //лист просто размеров
+                new List<ComboData>(), //лист свободных размеров
+                new List<ComboData>() //лист фиксированных размеров
+            };
 
 
             if (KmpsAppl.KompasAPI != null)
             {
-                ILineDimensions lineDimension = (ILineDimensions)KmpsAppl.Doc.GetSymbols2DContainer().LineDimensions;
+                ILineDimensions lineDimension = (ILineDimensions)this.doc.GetSymbols2DContainer().LineDimensions;
 
                 var result = await Task<List<List<ComboData>>>.Factory.StartNew(() =>
             {
@@ -90,16 +95,16 @@ namespace KompasLib.Tools
         /// <returns></returns>
         public async void Coordinate(double width, double CoordDopusk, double sizeText)
         {
-            KmpsAppl.Doc.GetChooseContainer().UnchooseAll();
+            this.doc.GetChooseContainer().UnchooseAll();
 
-            ILayer layer = KmpsAppl.Doc.GiveLayer(88);
+            ILayer layer = this.doc.GiveLayer(88);
             List<Point> points = new List<Point>();
-            if (KmpsAppl.Doc != null)
+            if (this.doc != null)
             {
-                ISelectionManager selection = KmpsAppl.Doc.GetSelectContainer();
+                ISelectionManager selection = this.doc.GetSelectContainer();
                 if (selection.SelectedObjects != null)
                 {
-                    IDrawingGroup TempGroup = (IDrawingGroup)KmpsAppl.KompasAPI.TransferReference(KmpsAppl.Doc.D5.ksNewGroup(0), KmpsAppl.Doc.D5.reference);
+                    IDrawingGroup TempGroup = (IDrawingGroup)KmpsAppl.KompasAPI.TransferReference(this.doc.D5.ksNewGroup(0), this.doc.D5.reference);
                     try
                     {
                         Array arrS = (Array)selection.SelectedObjects;
@@ -125,14 +130,14 @@ namespace KompasLib.Tools
                         object pObj = selection.SelectedObjects;
                         TempGroup.AddObjects(pObj);
                     }
-                    KmpsAppl.Doc.VisibleLayer(77, true);
-                    KmpsAppl.Doc.VisibleLayer(88, false);
+                    this.doc.VisibleLayer(77, true);
+                    this.doc.VisibleLayer(88, false);
 
                     TempGroup.Close();
 
                     ksRectangleParam recPar = (ksRectangleParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RectangleParam);
                     ksRectParam spcGabarit = (ksRectParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RectParam);
-                    if (KmpsAppl.Doc.D5.ksGetObjGabaritRect(TempGroup.Reference, spcGabarit) == 1)
+                    if (this.doc.D5.ksGetObjGabaritRect(TempGroup.Reference, spcGabarit) == 1)
                     {
                         ksMathPointParam mathBop = spcGabarit.GetpBot();
                         ksMathPointParam mathTop = spcGabarit.GetpTop();
@@ -168,29 +173,29 @@ namespace KompasLib.Tools
 
                         double kooff = width * 0.1;
 
-                        KmpsAppl.Doc.D5.ksEndObj();
+                        this.doc.D5.ksEndObj();
 
-                        ViewsAndLayersManager ViewsMng = KmpsAppl.Doc.D7.ViewsAndLayersManager;
+                        ViewsAndLayersManager ViewsMng = this.doc.D7.ViewsAndLayersManager;
                         IViews views = ViewsMng.Views;
                         IView view = views.ActiveView;
 
-                        layer = KmpsAppl.Doc.GiveLayer(77);
+                        layer = this.doc.GiveLayer(77);
 
                         layer.Color = 8355711;
                         layer.Update();
 
 
-                        if (KmpsAppl.Doc.D5.ksMacro(0) == 1)
+                        if (this.doc.D5.ksMacro(0) == 1)
                         {
                             //Вертикальная
-                            KmpsAppl.Doc.D5.ksLineSeg(x, y - kooff, x, dy + kooff, 3);
-                            KmpsAppl.Doc.D5.ksLineSeg(dx, y - kooff, dx, dy + kooff, 3);
+                            this.doc.D5.ksLineSeg(x, y - kooff, x, dy + kooff, 3);
+                            this.doc.D5.ksLineSeg(dx, y - kooff, dx, dy + kooff, 3);
                             //Горизонтальные
-                            KmpsAppl.Doc.D5.ksLineSeg(x - kooff, y, dx + kooff, y, 3);
-                            KmpsAppl.Doc.D5.ksLineSeg(x - kooff, dy, dx + kooff, dy, 3);
+                            this.doc.D5.ksLineSeg(x - kooff, y, dx + kooff, y, 3);
+                            this.doc.D5.ksLineSeg(x - kooff, dy, dx + kooff, dy, 3);
                             //Центр
-                            KmpsAppl.Doc.D5.ksLineSeg(x + (dx - x) / 2, y - kooff, x + (dx - x) / 2, dy + kooff, 3);
-                            KmpsAppl.Doc.D5.ksLineSeg(x - kooff, y + (dy - y) / 2, dx + kooff, y + (dy - y) / 2, 3);
+                            this.doc.D5.ksLineSeg(x + (dx - x) / 2, y - kooff, x + (dx - x) / 2, dy + kooff, 3);
+                            this.doc.D5.ksLineSeg(x - kooff, y + (dy - y) / 2, dx + kooff, y + (dy - y) / 2, 3);
                             //Ширина
                             SetText(Math.Round(mathTop.x - mathBop.x, 1).ToString(), mathBop.x + (mathTop.x - mathBop.x) / 2, mathBop.y - kooff * 1.5, ksAllocationEnum.ksAlCentre, 0, true);
                             //Высота
@@ -221,7 +226,7 @@ namespace KompasLib.Tools
                             }
 
                             //конец макрообъекта
-                            IMacroObject pMacroObj = (IMacroObject)KmpsAppl.KompasAPI.TransferReference(KmpsAppl.Doc.D5.ksEndObj(), KmpsAppl.Doc.D5.reference);
+                            IMacroObject pMacroObj = (IMacroObject)KmpsAppl.KompasAPI.TransferReference(this.doc.D5.ksEndObj(), this.doc.D5.reference);
                             pMacroObj.Name = "CoordMacro:" + pMacroObj.Reference;
                             pMacroObj.LayerNumber = 77;
                             pMacroObj.Update();
@@ -233,7 +238,7 @@ namespace KompasLib.Tools
                             foreach (IDrawingObject drawingObject in drawingContainer.Objects[0])
                                 await Task.Run(() =>
                                 {
-                                    IAttribute attribute = (IAttribute)KmpsAppl.KompasAPI.TransferReference(KmpsAppl.Doc.Attribute.NewAttr(drawingObject.Reference), KmpsAppl.Doc.D5.reference);
+                                    IAttribute attribute = (IAttribute)KmpsAppl.KompasAPI.TransferReference(this.doc.Attribute.NewAttr(drawingObject.Reference), this.doc.D5.reference);
                                     if (attribute != null)
                                     {
                                         attribute.SetValue(string.Empty, 0, 0, mathBop.x);
@@ -250,13 +255,13 @@ namespace KompasLib.Tools
                         }
                     }
 
-                    KmpsAppl.Doc.GiveLayer(0).Current = true;
-                    KmpsAppl.Doc.GiveLayer(0).Update();
+                    this.doc.GiveLayer(0).Current = true;
+                    this.doc.GiveLayer(0).Update();
                 }
 
                 void SetText(string text, double x, double y, ksAllocationEnum alignEnum, double angle = 0, bool under = false)
                 {
-                    IDrawingTexts drawingTexts = KmpsAppl.Doc.GetDrawingContainer().DrawingTexts;
+                    IDrawingTexts drawingTexts = this.doc.GetDrawingContainer().DrawingTexts;
                     IDrawingText drawingText = drawingTexts.Add();
                     IText txt = (IText)drawingText;
 
@@ -419,7 +424,7 @@ namespace KompasLib.Tools
                                 await Task.Run(() =>
                                 {
                                     //Создаем выноску
-                                    ViewsAndLayersManager ViewsMng = KmpsAppl.Doc.D7.ViewsAndLayersManager;
+                                    ViewsAndLayersManager ViewsMng = this.doc.D7.ViewsAndLayersManager;
                                     IViews views = ViewsMng.Views;
                                     IView view = views.ActiveView;
 
@@ -517,7 +522,7 @@ namespace KompasLib.Tools
                                 double angle = KmpsAppl.Mat.ksAngle(pointX1, pointY1, pointX2, pointY2);
                                 if ((angle >= 110) && (angle < 300)) angle -= 180;
 
-                                IDrawingTexts drawingTexts = KmpsAppl.Doc.GetDrawingContainer().DrawingTexts;
+                                IDrawingTexts drawingTexts = this.doc.GetDrawingContainer().DrawingTexts;
                                 IDrawingText drawingText = drawingTexts.Add();
                                 IText txt = (IText)drawingText;
 
@@ -576,13 +581,13 @@ namespace KompasLib.Tools
         /// Создает угловой размер между двумя линиями
         /// </summary>
         /// <returns>Возвращает класс IAngleDimention</returns>
-        public static IAngleDimension SetAngleDim(ILineSegment lineSegment1, ILineSegment lineSegment2)
+        public IAngleDimension SetAngleDim(ILineSegment lineSegment1, ILineSegment lineSegment2)
         {
-            KmpsAppl.Doc.VisibleLayer(77, false);
-            KmpsAppl.Doc.VisibleLayer(88, true);
-            ILayer layer = KmpsAppl.Doc.GiveLayer(88);
+            this.doc.VisibleLayer(77, false);
+            this.doc.VisibleLayer(88, true);
+            ILayer layer = this.doc.GiveLayer(88);
 
-            ViewsAndLayersManager ViewsMng = KmpsAppl.Doc.D7.ViewsAndLayersManager;
+            ViewsAndLayersManager ViewsMng = this.doc.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
             IView view = views.ActiveView;
 
@@ -609,18 +614,18 @@ namespace KompasLib.Tools
         }
 
         //Проставить линейный размер
-        public static ILineDimension SetLineDim(double X1, double Y1, double X2, double Y2, double height, bool upd, ksLineDimensionOrientationEnum orientationEnum = ksLineDimensionOrientationEnum.ksLinDParallel)
+        public ILineDimension SetLineDim(double X1, double Y1, double X2, double Y2, double height, bool upd, ksLineDimensionOrientationEnum orientationEnum = ksLineDimensionOrientationEnum.ksLinDParallel)
         {
             if (KmpsAppl.Mat.ksEqualPoints(X1, Y1, X2, Y2) == 0)
             {
-                KmpsAppl.Doc.VisibleLayer(77, false);
-                KmpsAppl.Doc.VisibleLayer(88, true);
+                this.doc.VisibleLayer(77, false);
+                this.doc.VisibleLayer(88, true);
 
-                ILayer layer = KmpsAppl.Doc.GiveLayer(88);
+                ILayer layer = this.doc.GiveLayer(88);
                 layer.Color = 8355711;
                 layer.Update();
 
-                ISymbols2DContainer symbols = KmpsAppl.Doc.GetSymbols2DContainer();
+                ISymbols2DContainer symbols = this.doc.GetSymbols2DContainer();
                 ILineDimension lineDimension = symbols.LineDimensions.Add();
 
                 IDimensionText dimensionText = (IDimensionText)lineDimension;
@@ -660,14 +665,14 @@ namespace KompasLib.Tools
                 lineDimension.LayerNumber = 88;
                 if (upd) lineDimension.Update();
 
-                KmpsAppl.Doc.GiveLayer(0);
+                this.doc.GiveLayer(0);
 
 
                 return lineDimension;
 
                 Point RotatePoint(Point startPoint, Point endPoint, double hght, double angleInDegrees = 90)
                 {
-                    startPoint = startPoint + (endPoint - startPoint) / 2;
+                    startPoint += (endPoint - startPoint) / 2;
                     double lenth = KmpsAppl.Mat.ksDistancePntPnt(startPoint.X, startPoint.Y, endPoint.X, endPoint.Y);
                     double pos = hght / lenth;
                     Point pointH = startPoint + (endPoint - startPoint) * pos;
@@ -700,14 +705,14 @@ namespace KompasLib.Tools
             if (SizeCheks || force == true)
             {
                 if (KmpsAppl.KompasAPI != null)
-                    GetSize(true);
+                    GetSize();
                 else
                     return;
             }
             //Расставить размеры в зависимости от типа объекта
-            void GetSize(bool noSqare)
+            void GetSize()
             {
-                IDrawingObject pDrawObj = (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(ObjRef, KmpsAppl.Doc.D5.reference);
+                IDrawingObject pDrawObj = (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(ObjRef, this.doc.D5.reference);
                 if (pDrawObj != null)
                 {
                     // Получить тип объекта
@@ -748,7 +753,7 @@ namespace KompasLib.Tools
                         case (int)Kompas6Constants.DrawingObjectTypeEnum.ksDrEllipse:
                             {
                                 IEllipse obj = (IEllipse)pDrawObj;
-                                if (KmpsAppl.Doc.D5.ksMakeEncloseContours(0, obj.X1, obj.Y1) > 0)
+                                if (this.doc.D5.ksMakeEncloseContours(0, obj.X1, obj.Y1) > 0)
                                 {
 
                                 }
@@ -792,8 +797,7 @@ namespace KompasLib.Tools
                                 break;
                             }
                     }
-                    // Убрать подсветку
-                    ILayer layer = KmpsAppl.Doc.GiveLayer(0);
+
                 }
 
                 //Привязка размера
@@ -850,9 +854,9 @@ namespace KompasLib.Tools
         public void SplitLine(double nSides, bool dellBaseSim)
         {
             KmpsAppl.someFlag = false;
-            ISelectionManager selection = KmpsAppl.Doc.GetSelectContainer();
+            ISelectionManager selection = this.doc.GetSelectContainer();
 
-            KmpsDoc.LockedLayerAsync(88, true);
+            this.doc.LockedLayerAsync(88, true);
 
             SelectObj = SelectObject();
 
@@ -865,19 +869,19 @@ namespace KompasLib.Tools
                 while (j > 0)
                 {
                     //Селектируем
-                    KmpsAppl.Doc.GetChooseContainer().Choose(SelectObj);
+                    this.doc.GetChooseContainer().Choose(SelectObj);
                     SelectPointFlag = true;
                     //Выбираем
                     LightDotOnObj(SelectObj, true);
                     info.Init();
                     info.prompt = "Выберите точку";
-                    j = KmpsAppl.Doc.D5.ksCursor(info, ref x, ref y, phtm);
+                    j = this.doc.D5.ksCursor(info, ref x, ref y, phtm);
 
                     indexSelectObj = NumberPointNear(SelectObj, x, y);
                     LightDotOnObj(SelectObj, false);
 
                     SelectPointFlag = false;
-                    KmpsAppl.Doc.D5.ksPhantomShowHide("0");
+                    this.doc.D5.ksPhantomShowHide("0");
                 }
             }
 
@@ -896,9 +900,9 @@ namespace KompasLib.Tools
                 }
             }
 
-            KmpsDoc.LockedLayerAsync(88, false);
+            this.doc.LockedLayerAsync(88, false);
             //Расселектируем
-            KmpsAppl.Doc.GetChooseContainer().UnchooseAll();
+            this.doc.GetChooseContainer().UnchooseAll();
 
             async void SplitLine(object SpliObj)
             {
@@ -936,7 +940,7 @@ namespace KompasLib.Tools
                                     }
 
                                 #region Создание линий
-                                ILineSegments segments = KmpsAppl.Doc.GetDrawingContainer().LineSegments;
+                                ILineSegments segments = this.doc.GetDrawingContainer().LineSegments;
 
                                 Objs.Add(segmentsArr[0]); //добавляем в список предыдущий
 
@@ -966,7 +970,7 @@ namespace KompasLib.Tools
                                 lineSegment.Delete();
                                 
 
-                                ILineSegments lineSegments = KmpsAppl.Doc.GetDrawingContainer().LineSegments;
+                                ILineSegments lineSegments = this.doc.GetDrawingContainer().LineSegments;
                                 Point LastPoint = new Point(0, 0);
 
                                 for (int i = 0; i < nSides; i++)
@@ -1046,7 +1050,7 @@ namespace KompasLib.Tools
         }
 
         //Привязка размера
-        public static void SetConstrainttDim(object Dim, object DrawObj, int Index1, int Index2, ksDimensionTextBracketsEnum bracketsEnum, bool infoDim, object DrawObj2 = null, int index1_2 = 0)
+        public void SetConstrainttDim(object Dim, object DrawObj, int Index1, int Index2, ksDimensionTextBracketsEnum bracketsEnum, bool infoDim, object DrawObj2 = null, int index1_2 = 0)
         {
             if (Dim != null)
             {
@@ -1113,13 +1117,13 @@ namespace KompasLib.Tools
                 info.Init();
                 info.SetCursorText("Выберите объект");
 
-                j = KmpsAppl.Doc.D5.ksCursor(info, ref x, ref y, 0);
+                j = this.doc.D5.ksCursor(info, ref x, ref y, 0);
                 if (j != 0)
                 {
-                    reference RefSelectedObj = KmpsAppl.Doc.D5.ksFindObj(x, y, 100);
-                    if (KmpsAppl.Doc.D5.ksExistObj(RefSelectedObj) > 0)
+                    reference RefSelectedObj = this.doc.D5.ksFindObj(x, y, 100);
+                    if (this.doc.D5.ksExistObj(RefSelectedObj) > 0)
                     {
-                        SelectObj = (object)KmpsAppl.KompasAPI.TransferReference(RefSelectedObj, KmpsAppl.Doc.D5.reference);
+                        SelectObj = (object)KmpsAppl.KompasAPI.TransferReference(RefSelectedObj, this.doc.D5.reference);
                         return SelectObj;
                     }
                 }
@@ -1168,7 +1172,7 @@ namespace KompasLib.Tools
 
         public async Task SetVariableToDim(bool dell, ksDimensionTextBracketsEnum brackets, double VariableValue = 0)
         {
-            dynamic objects = KmpsAppl.Doc.GiveSelectOrChooseObj();
+            dynamic objects = this.doc.GiveSelectOrChooseObj();
 
             if (objects != null)
             {
@@ -1191,7 +1195,7 @@ namespace KompasLib.Tools
         }
 
 
-        public static void SetParamToObj(object objDim, bool dell, ksDimensionTextBracketsEnum bracketsEnum, double VariableValue = 0)
+        public void SetParamToObj(object objDim, bool dell, ksDimensionTextBracketsEnum bracketsEnum, double VariableValue = 0)
         {
             IDrawingObject SetDrawingObject = (IDrawingObject)objDim;
             if (SetDrawingObject != null)
@@ -1259,18 +1263,18 @@ namespace KompasLib.Tools
         }
 
         //Меняет параметр в размере
-        public static void SetValToVariableDim(IDrawingObject1 drawing1, double VariableValue)
+        public void SetValToVariableDim(IDrawingObject1 drawing1, double VariableValue)
         {
             if (drawing1.Constraints != null)
             {
                 foreach (IParametriticConstraint constraint in drawing1.Constraints)
                     if (constraint.ConstraintType == ksConstraintTypeEnum.ksCDimWithVariable)
-                        if (KmpsAppl.Doc.Var.IsVariableNameValid(constraint.Variable) == false)
+                        if (this.doc.Var.IsVariableNameValid(constraint.Variable) == false)
                         {
-                            IVariable7 variable7 = KmpsAppl.Doc.Var.Variable(constraint.Variable, string.Empty, false);
+                            IVariable7 variable7 = this.doc.Var.Variable(constraint.Variable, string.Empty, false);
                             if (variable7 != null)
                                 variable7.Value = VariableValue;
-                            KmpsAppl.Doc.D71.UpdateVariables();
+                            this.doc.D71.UpdateVariables();
                         }
             }
         }
@@ -1281,30 +1285,30 @@ namespace KompasLib.Tools
             if (drawing1.Constraints != null)
                 foreach (IParametriticConstraint constraint in drawing1.Constraints)
                     if (constraint.ConstraintType == ksConstraintTypeEnum.ksCDimWithVariable)
-                        return KmpsAppl.Doc.Var.Variable(constraint.Variable, string.Empty);
+                        return this.doc.Var.Variable(constraint.Variable, string.Empty);
             return null;
         }
 
         //Соединяет две линии
         public void ConnectLineToLine()
         {
-            KmpsAppl.Doc.GetChooseContainer().UnchooseAll();
+            this.doc.GetChooseContainer().UnchooseAll();
 
             object obj = null;
 
             try
             {
-                obj = KmpsAppl.Doc.GetSelectContainer().SelectedObjects;
+                obj = this.doc.GetSelectContainer().SelectedObjects;
             }
             catch
             {
-                Array array = KmpsAppl.Doc.GetSelectContainer().SelectedObjects;
+                Array array = this.doc.GetSelectContainer().SelectedObjects;
                 obj = array.GetValue(array.Length - 1);
             }
 
             if (obj != null)
             {
-                KmpsDoc.LockedLayerAsync(88, true);
+                this.doc.LockedLayerAsync(88, true);
                 KmpsAppl.someFlag = false;
 
                 RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
@@ -1316,7 +1320,7 @@ namespace KompasLib.Tools
                 SetConstraintMergePoint(obj, SelectObj, GetMergeIndex(obj), GetMergeIndex(SelectObj));
             }
 
-            KmpsDoc.LockedLayerAsync(88, false);
+            this.doc.LockedLayerAsync(88, false);
             KmpsAppl.someFlag = true;
 
             int GetMergeIndex(object fObj)
@@ -1341,7 +1345,7 @@ namespace KompasLib.Tools
         public void InvertPointCoord(bool xinvert)
         {
             KmpsAppl.someFlag = false;
-            ISelectionManager selection = KmpsAppl.Doc.GetSelectContainer();
+            ISelectionManager selection = this.doc.GetSelectContainer();
 
             if (selection.SelectedObjects != null)
             {
@@ -1372,7 +1376,7 @@ namespace KompasLib.Tools
                 
                 void SetPoint(IBaseLeader baseLeader, bool invertX)
                 {
-                    IAttribute attribute = (IAttribute)KmpsAppl.KompasAPI.TransferReference(KmpsAppl.Doc.Attribute.GiveObjAttr(baseLeader.Reference), KmpsAppl.Doc.D5.reference);
+                    IAttribute attribute = (IAttribute)KmpsAppl.KompasAPI.TransferReference(this.doc.Attribute.GiveObjAttr(baseLeader.Reference), this.doc.D5.reference);
 
                     if (attribute != null)
                     {
@@ -1506,12 +1510,12 @@ namespace KompasLib.Tools
                                     IPoint point = (IPoint)drawingObject;
                                     if (on && (constraint.Index == indexOn || indexOn == -1))
                                     {
-                                        KmpsAppl.Doc.GetChooseContainer().Choose(point);
+                                        this.doc.GetChooseContainer().Choose(point);
                                         point.Style = 4;
                                     }
                                     else
                                     {
-                                        KmpsAppl.Doc.GetChooseContainer().Unchoose(point);
+                                        this.doc.GetChooseContainer().Unchoose(point);
                                         point.Style = 1;
                                     }
 
@@ -1522,10 +1526,10 @@ namespace KompasLib.Tools
         //Рисует размер между двумя объектами
         public void ObjectsToObjectDim()
         {
-            KmpsDoc.LockedLayerAsync(88, true);
+            this.doc.LockedLayerAsync(88, true);
             KmpsAppl.someFlag = false;
             //Забираем выделенные объекты
-            ISelectionManager selection = KmpsAppl.Doc.GetSelectContainer();
+            ISelectionManager selection = this.doc.GetSelectContainer();
 
             RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
             double x = 0, y = 0;
@@ -1541,7 +1545,7 @@ namespace KompasLib.Tools
                 while (indexSelectObj < 0)
                 {
                     //Селектируем
-                    KmpsAppl.Doc.GetChooseContainer().Choose(SelectObj);
+                    this.doc.GetChooseContainer().Choose(SelectObj);
 
                     SelectPointFlag = true;
 
@@ -1549,7 +1553,7 @@ namespace KompasLib.Tools
                     //Выбираем
                     info.Init();
                     info.SetCursorText("Выберите точку");
-                    if (KmpsAppl.Doc.D5.ksCursor(info, ref x, ref y, phtm) != 0)
+                    if (this.doc.D5.ksCursor(info, ref x, ref y, phtm) != 0)
                     {
 
                         indexSelectObj = NumberPointNear(SelectObj, x, y);
@@ -1577,21 +1581,21 @@ namespace KompasLib.Tools
                     {
                         double x2 = 0, y2 = 0;
                         //Селектируем
-                        KmpsAppl.Doc.GetChooseContainer().Choose(IdObj);
+                        this.doc.GetChooseContainer().Choose(IdObj);
                         LightDotOnObj(IdObj, true);
                         SelectPointFlag = true;
                         //Выбираем
                         info.SetCursorText("Выберите точку");
-                        KmpsAppl.Doc.D5.ksCursor(info, ref x2, ref y2, phtm);
+                        this.doc.D5.ksCursor(info, ref x2, ref y2, phtm);
                        int indexDrawObj = NumberPointNear(IdObj, x2, y2);
-                        KmpsAppl.Doc.GetChooseContainer().Unchoose(IdObj);
+                        this.doc.GetChooseContainer().Unchoose(IdObj);
                         SetConstrainttDim(SetLineDim(x, y, x2, y2, 0, true), IdObj, 0,indexDrawObj, ksDimensionTextBracketsEnum.ksDimBracketsOff, false, SelectObj, indexSelectObj);
                         LightDotOnObj(IdObj, false);
                     }
                 }
-                KmpsAppl.Doc.GetChooseContainer().UnchooseAll();
+                this.doc.GetChooseContainer().UnchooseAll();
             }
-            KmpsDoc.LockedLayerAsync(88, false);
+            this.doc.LockedLayerAsync(88, false);
             KmpsAppl.someFlag = true;
         }
 
@@ -1605,21 +1609,21 @@ namespace KompasLib.Tools
                 if (lastLine.Count > 0)
                 {
                     if (lastLine[0] != null)
-                        if (KmpsAppl.Doc.D5.ksExistObj(lastLine[0].Reference) == 0) lastLine.Clear();
+                        if (this.doc.D5.ksExistObj(lastLine[0].Reference) == 0) lastLine.Clear();
                     if (lastLine.Count > 0)
-                        if (KmpsAppl.Doc.D5.ksExistObj(lastLine.Last().Reference) == 0) lastLine.Remove(lastLine.Last());
+                        if (this.doc.D5.ksExistObj(lastLine.Last().Reference) == 0) lastLine.Remove(lastLine.Last());
                     if (firstDim != null)
-                        if (KmpsAppl.Doc.D5.ksExistObj(firstDim.Reference) == 0) firstDim = null;
+                        if (this.doc.D5.ksExistObj(firstDim.Reference) == 0) firstDim = null;
                 }
 
-                ILineSegments lineSegments = KmpsAppl.Doc.GetDrawingContainer().LineSegments;
+                ILineSegments lineSegments = this.doc.GetDrawingContainer().LineSegments;
 
-                if (KmpsAppl.Doc.GetSelectContainer().SelectedObjects != null && !(KmpsAppl.Doc.GetSelectContainer().SelectedObjects is object[]))
+                if (this.doc.GetSelectContainer().SelectedObjects != null && !(this.doc.GetSelectContainer().SelectedObjects is object[]))
                 {       //Если выбранный объект линия то она будет первым объектом
-                    if (((IDrawingObject)KmpsAppl.Doc.GetSelectContainer().SelectedObjects).DrawingObjectType == DrawingObjectTypeEnum.ksDrAnnLineSeg)
+                    if (((IDrawingObject)this.doc.GetSelectContainer().SelectedObjects).DrawingObjectType == DrawingObjectTypeEnum.ksDrAnnLineSeg)
                     {
-                        lastLine[0] = (ILineSegment)KmpsAppl.Doc.GetSelectContainer().SelectedObjects;
-                        KmpsAppl.Doc.GetSelectContainer().UnselectAll();
+                        lastLine[0] = (ILineSegment)this.doc.GetSelectContainer().SelectedObjects;
+                        this.doc.GetSelectContainer().UnselectAll();
                     }
                 }
 
@@ -1809,7 +1813,7 @@ namespace KompasLib.Tools
 
         private IPoint CheckOrMakePoint(object obj, double X, double Y, int index, bool upd)
         {
-            IPoints points = KmpsAppl.Doc.GetDrawingContainer().Points;
+            IPoints points = this.doc.GetDrawingContainer().Points;
 
             foreach (IPoint point in points)
                 if (point.X == X && point.Y == Y)
@@ -1828,18 +1832,18 @@ namespace KompasLib.Tools
         }
 
         //Тупой угол
-        public static void ObtuseAngle()
+        public void ObtuseAngle()
         {
-            if (KmpsAppl.Doc != null)
+            if (this.doc != null)
             {
-                KmpsDoc.LockedLayerAsync(88, true);
+                this.doc.LockedLayerAsync(88, true);
 
                 RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
                 double x = 0, y = 0;
 
                 List<ILineSegment> segments = new List<ILineSegment>(); //лист для сегментов
-                KmpsAppl.Doc.GetChooseContainer().UnchooseAll(); //убираем все выделения
-                ISelectionManager selection = KmpsAppl.Doc.GetSelectContainer(); //Получаем выбранные объекты
+                this.doc.GetChooseContainer().UnchooseAll(); //убираем все выделения
+                ISelectionManager selection = this.doc.GetSelectContainer(); //Получаем выбранные объекты
                 if (selection.SelectedObjects != null)
                 {
                     try
@@ -1865,16 +1869,16 @@ namespace KompasLib.Tools
                     info.Init();
                     info.SetCursorText("Выберите объект");
 
-                    j = KmpsAppl.Doc.D5.ksCursor(info, ref x, ref y, 0);
-                    RefSelectedObj = KmpsAppl.Doc.D5.ksFindObj(x, y, 100);
-                    if (KmpsAppl.Doc.D5.ksExistObj(RefSelectedObj) > 0)
+                    j = this.doc.D5.ksCursor(info, ref x, ref y, 0);
+                    RefSelectedObj = this.doc.D5.ksFindObj(x, y, 100);
+                    if (this.doc.D5.ksExistObj(RefSelectedObj) > 0)
                     {
-                        SelectObj = (object)KmpsAppl.KompasAPI.TransferReference(RefSelectedObj, KmpsAppl.Doc.D5.reference);
+                        SelectObj = (object)KmpsAppl.KompasAPI.TransferReference(RefSelectedObj, this.doc.D5.reference);
                         IDrawingObject obj = (IDrawingObject)SelectObj;
                         if (obj.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
                         {
                             segments.Add((ILineSegment)obj);
-                            KmpsAppl.Doc.GetChooseContainer().Choose(SelectObj);
+                            this.doc.GetChooseContainer().Choose(SelectObj);
                         }
                     }
                 }
@@ -1884,8 +1888,8 @@ namespace KompasLib.Tools
                         if (!CheckSize(segments[i - 1], segments[i]))
                         SetConstraintoADim(SetAngleDim(segments[i - 1], segments[i]), ksDimensionTextBracketsEnum.ksDimBracketsOff);
 
-                KmpsDoc.LockedLayerAsync(88, false);
-                KmpsAppl.Doc.GetChooseContainer().UnchooseAll();
+                this.doc.LockedLayerAsync(88, false);
+                this.doc.GetChooseContainer().UnchooseAll();
             }
 
             bool CheckSize(ILineSegment segment1, ILineSegment segment2)

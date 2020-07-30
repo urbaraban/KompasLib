@@ -34,7 +34,7 @@ namespace KompasLib.Event
         // koBeginDelete - Попытка удаления объекта
         public bool BeginDelete(int objout)
         {
-            object obj = KmpsAppl.KompasAPI.TransferReference(objout, KmpsAppl.Doc.D5.reference);
+           /* object obj = KmpsAppl.KompasAPI.TransferReference(objout, KmpsAppl.Doc.D5.reference);
             try
             {
                 KmpsAppl.Doc.D5.ksLightObj(objout, 1);
@@ -45,7 +45,7 @@ namespace KompasLib.Event
                 }
             }
             catch { }
-            KmpsAppl.Doc.D5.ksLightObj(objout, 0);
+            KmpsAppl.Doc.D5.ksLightObj(objout, 0);*/
             return true;
         }
 

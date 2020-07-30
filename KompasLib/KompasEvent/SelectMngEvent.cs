@@ -8,7 +8,7 @@ namespace KompasLib.Event
 {
     public class SelectMngEvent : BaseEvent, ksSelectionMngNotify
     {
-        public event EventHandler<int> SelectedArray;
+
         public event EventHandler<int> SelectedObject;
 
         public SelectMngEvent(object obj, object doc)
@@ -21,7 +21,7 @@ namespace KompasLib.Event
         {
             try
             {
-                Array array = KmpsAppl.Doc.GetSelectContainer().SelectedObjects;
+                //Array array = KmpsAppl.Doc.GetSelectContainer().SelectedObjects;
             }
             catch
             {

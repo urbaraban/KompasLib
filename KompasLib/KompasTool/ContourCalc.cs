@@ -4,20 +4,16 @@ using Kompas6API7;
 using Kompas6Constants;
 using KompasLib.Tools;
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using reference = System.Int32;
 
 namespace KompasLib.KompasTool
 {
-    public static class ContourCalc
+    public class ContourCalc
     {
-        public static PathGeometry GetPoint(double crs, bool add, bool cursor = true)
+        public  PathGeometry GetPoint(KmpsDoc doc, double crs, bool add, bool cursor = true)
         {
-
             Point Offcet = new Point(0, 0);
 
             if (KmpsAppl.KompasAPI != null)
@@ -27,25 +23,25 @@ namespace KompasLib.KompasTool
                 RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
 
                 //Ищем или находим макрообъект по индексу потолка
-                IMacroObject macroObject = KmpsAppl.Doc.Macro.FindCeilingMacro("0");
+                IMacroObject macroObject = doc.Macro.FindCeilingMacro("0");
                 //Создаем если нет
-                if (macroObject == null) macroObject = KmpsAppl.Doc.Macro.MakeCeilingMacro("0");
+                if (macroObject == null) macroObject = doc.Macro.MakeCeilingMacro("0");
 
                 if (cursor)
                 {
                     if (!add)
                     {
-                        KmpsAppl.Doc.Macro.RemoveCeilingMacro("0");
-                        macroObject = KmpsAppl.Doc.Macro.MakeCeilingMacro("0");
+                        doc.Macro.RemoveCeilingMacro("0");
+                        macroObject = doc.Macro.MakeCeilingMacro("0");
                     }
-                    int j = KmpsAppl.Doc.D5.ksCursor(info, ref x, ref y, 0);
-                    if (!KmpsAppl.Doc.Macro.AddCeilingMacro(KmpsAppl.Doc.D5.ksMakeEncloseContours(0, x, y), "0")) MessageBox.Show("Контур не добавили", "Ошибка"); //Добавляем ksMakeEncloseContours
+                    doc.D5.ksCursor(info, ref x, ref y, 0);
+                    if (!doc.Macro.AddCeilingMacro(doc.D5.ksMakeEncloseContours(0, x, y), "0")) MessageBox.Show("Контур не добавили", "Ошибка"); //Добавляем ksMakeEncloseContours
                 }
 
 
                 ksRectangleParam recPar = (ksRectangleParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RectangleParam);
                 ksRectParam spcGabarit = (ksRectParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RectParam);
-                if (KmpsAppl.Doc.D5.ksGetObjGabaritRect(macroObject.Reference, spcGabarit) == 1)
+                if (doc.D5.ksGetObjGabaritRect(macroObject.Reference, spcGabarit) == 1)
                 {
                     ksMathPointParam mathBop = spcGabarit.GetpBot();
                     ksMathPointParam mathTop = spcGabarit.GetpTop();
@@ -60,7 +56,7 @@ namespace KompasLib.KompasTool
                 reference refContour1 = Iterator1.ksMoveIterator("F");
                 PathGeometry path = new PathGeometry();
 
-                // contoursList.DisplayName = KmpsAppl.Doc.D7.Name;
+                // contoursList.DisplayName = doc.D7.Name;
 
                 //
                 //Начинаем перебор контуров со всем что есть
@@ -70,7 +66,7 @@ namespace KompasLib.KompasTool
 
                 while (refContour1 != 0)
                 {
-                    IContour contour = KmpsAppl.Doc.Macro.GiveContour(refContour1);
+                    IContour contour = doc.Macro.GiveContour(refContour1);
 
                     if (contour != null)
                         path.Figures.Add(TraceContour(contour));

@@ -5,45 +5,50 @@ using Kompas6Constants;
 using QRCoder;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace KompasLib.Tools
 {
-    public class KmpsDoc
+    public class KmpsDoc : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void OnPropertyChanged([CallerMemberName] string prop = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+        }
+
+        private List<object> selectedobject = new List<object>();
+        public List<object> SelectedObjects
+        {
+            get => selectedobject;
+            set
+            {
+                OnPropertyChanged("SelectedObjects");
+                selectedobject = value;
+            }
+        }
+
         private KmpsAppl kmpsAppl;
 
         public KVariable Var;
-
         public SizeTool ST { get; }
-
         public KmpsAttr Attribute { get; }
-
-
         public IKompasDocument2D D7 { get; set; }
-
         public IKompasDocument1 D1 { get; }
-
-
         public IKompasDocument2D1 D71 { get; }
-
         public ksDocument2D D5 { get; set; }
-
         public IDocuments Documents7 { get; set; }
-
         public ksDocumentParam DocPar { get; set; }
-
         public KmpsMacro Macro { get; set; }
 
-
-        public KmpsDoc(KmpsAppl kmps)
+        public KmpsDoc(KmpsAppl appl)
         {
-            this.kmpsAppl = kmps;
+            this.kmpsAppl = appl;
             if (KmpsAppl.KompasAPI != null)
             {
                 this.Documents7 = KmpsAppl.Appl.Documents;
@@ -73,8 +78,44 @@ namespace KompasLib.Tools
 
                 this.Macro = new KmpsMacro(this.kmpsAppl);
                 this.ST = new SizeTool(this);
-
                 this.Var = new KVariable(this);
+
+                this.kmpsAppl.SelectObject += KmpsAppl_SelectObject;
+
+                if (this.GetSelectContainer().SelectedObjects != null)
+                {
+                    try
+                    {
+                        foreach (object obj in this.GetSelectContainer().SelectedObjects)
+                        {
+                            if (obj is IDrawingObject drawingObject)
+                            {
+                                this.SelectedObjects.Add(drawingObject);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        if (this.GetSelectContainer().SelectedObjects is IDrawingObject drawingObject)
+                        {
+                            this.SelectedObjects.Add(drawingObject);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void KmpsAppl_SelectObject(object sender, object e)
+        {
+            if (e == null)
+            {
+                this.SelectedObjects.Clear();
+                OnPropertyChanged("SelectedObjects");
+            }
+            else
+            {
+                this.SelectedObjects.Add(e);
+                OnPropertyChanged("SelectedObjects");
             }
         }
 
@@ -91,6 +132,26 @@ namespace KompasLib.Tools
                     return mng;
             }
             return null;
+        }
+
+        public List<object> GetSelectObjects()
+        {
+            List<object> objects = new List<object>();
+            try
+            {
+                Array temp = (Array)this.GetSelectContainer().SelectedObjects;
+                foreach (object obj in temp)
+                {
+                    objects.Add(obj);
+                }
+            }
+            catch
+            {
+                object obj = (object)this.GetSelectContainer().SelectedObjects;
+                objects.Add(obj);
+            }
+            
+            return objects;
         }
 
         //Получает только выделенные объекты
@@ -267,7 +328,7 @@ namespace KompasLib.Tools
 
         public void CreateQrCode(string message, double scale, double x = 0, double y = 0)
         {
-            if (KmpsAppl.Appl.ActiveDocument.Path != string.Empty)
+            if (message != string.Empty)
             {
                 ksRequestInfo info = (ksRequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
 
@@ -328,6 +389,6 @@ namespace KompasLib.Tools
             
         }
 
-       
+
     }
 }

@@ -1,6 +1,4 @@
 ﻿using Kompas6API5;
-
-using KompasLib.Tools;
 using System;
 
 
@@ -10,6 +8,7 @@ namespace KompasLib.Event
     {
 
         public event EventHandler<int> SelectedObject;
+        public event EventHandler<int> UnselectedObject;
 
         public SelectMngEvent(object obj, object doc)
             : base(obj, typeof(ksSelectionMngNotify).GUID, doc,
@@ -19,14 +18,7 @@ namespace KompasLib.Event
         // ksmSelect - Объект селектирован
         public bool Select(object obj)
         {
-            try
-            {
-                //Array array = KmpsAppl.Doc.GetSelectContainer().SelectedObjects;
-            }
-            catch
-            {
-                SelectedObject?.Invoke(this, (int)obj);
-            }
+            SelectedObject?.Invoke(this, (int)obj);
             return true;
         }
 
@@ -34,6 +26,7 @@ namespace KompasLib.Event
         // ksmUnselect - Объект расселектирован
         public bool Unselect(object obj)
         {
+            UnselectedObject?.Invoke(this, (int)obj);
             return true;
         }
 

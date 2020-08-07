@@ -20,14 +20,15 @@ namespace KompasLib.Tools
 
         public static object SelectObj;
         public static bool SelectPointFlag = false;
+        public bool WorkFlag = false;
         public static ksPhantom phtm;
         public static IDrawingGroup PhGroup;
 
-        static ILineDimension firstDim = null;
-        static readonly List<ILineSegment> lastLine = new List<ILineSegment>();
+        private static ILineDimension firstDim = null;
+        private static readonly List<ILineSegment> lastLine = new List<ILineSegment>();
 
-        static int[] YesType = { 1, 2, 3, 8, 26, 28, 31, 32, 33, 34, 35, 36, 80 };
-        static int[] DimType = { 9, 10, 13, 14, 15, 43 };
+        private static int[] YesType = { 1, 2, 3, 8, 26, 28, 31, 32, 33, 34, 35, 36, 80 };
+        private static int[] DimType = { 9, 10, 13, 14, 15, 43 };
 
         public SizeTool(KmpsDoc Doc)
         {
@@ -614,8 +615,9 @@ namespace KompasLib.Tools
         }
 
         //Проставить линейный размер
-        public ILineDimension SetLineDim(double X1, double Y1, double X2, double Y2, double height, bool upd, ksLineDimensionOrientationEnum orientationEnum = ksLineDimensionOrientationEnum.ksLinDParallel)
+        public ILineDimension SetLineDim(double X1, double Y1, double X2, double Y2, double height, ksLineDimensionOrientationEnum orientationEnum = ksLineDimensionOrientationEnum.ksLinDParallel)
         {
+
             if (KmpsAppl.Mat.ksEqualPoints(X1, Y1, X2, Y2) == 0)
             {
                 this.doc.VisibleLayer(77, false);
@@ -663,7 +665,7 @@ namespace KompasLib.Tools
                 dimensionParams.TextBase = ksDimensionBaseEnum.ksDimBaseCenter;
 
                 lineDimension.LayerNumber = 88;
-                if (upd) lineDimension.Update();
+                lineDimension.Update();
 
                 this.doc.GiveLayer(0);
 
@@ -700,7 +702,7 @@ namespace KompasLib.Tools
         /// Образмерить объект
         /// </summary>
         /// <returns>force — образмерить насильно, игнорируя настройки</returns>
-        public void SizeMe(int ObjRef, bool SizeCheks, bool force = false)
+        public void SizeMe(int ObjRef, bool SizeCheks, bool variable, bool force = false)
         {
             if (SizeCheks || force == true)
             {
@@ -726,8 +728,8 @@ namespace KompasLib.Tools
                                 ILineSegment obj = (ILineSegment)pDrawObj;
                                 if (obj.Style == 1 || obj.Style == 7)
                                 {
-                                    object Dim = SetLineDim(obj.X1, obj.Y1, obj.X2, obj.Y2, 20, true);
-                                    SetConstrainttDim(Dim, obj, 0, 1);
+                                    object Dim = SetLineDim(obj.X1, obj.Y1, obj.X2, obj.Y2, 20);
+                                    SetConstrainttDim(Dim, obj, 0, 1, variable);
                                 }
                                 break;
                             }
@@ -737,10 +739,10 @@ namespace KompasLib.Tools
                                 IRectangle obj = (IRectangle)pDrawObj;
                                 if (obj.Style == 1 || obj.Style == 7)
                                 {
-                                    object Dim = SetLineDim(obj.X + obj.Width, obj.Y + obj.Height, obj.X, obj.Y, 20, true, ksLineDimensionOrientationEnum.ksLinDHorizontal);
-                                    SetConstrainttDim(Dim, obj, 1, 0);
-                                    Dim = SetLineDim(obj.X, obj.Y, obj.X + obj.Width, obj.Y + obj.Height, 20, true, ksLineDimensionOrientationEnum.ksLinDVertical);
-                                    SetConstrainttDim(Dim, obj, 0, 1);
+                                    object Dim = SetLineDim(obj.X + obj.Width, obj.Y + obj.Height, obj.X, obj.Y, 20, ksLineDimensionOrientationEnum.ksLinDHorizontal);
+                                    SetConstrainttDim(Dim, obj, 1, 0, variable);
+                                    Dim = SetLineDim(obj.X, obj.Y, obj.X + obj.Width, obj.Y + obj.Height, 20, ksLineDimensionOrientationEnum.ksLinDVertical);
+                                    SetConstrainttDim(Dim, obj, 0, 1, variable);
                                 }
                                 break;
                             }
@@ -801,311 +803,193 @@ namespace KompasLib.Tools
                 }
 
                 //Привязка размера
-                void SetConstrainttDim(object dim, object obj, int Index1, int Index2)
+             
+            }
+        }
+
+        public void SetConstrainttDim(object dim, object obj, int Index1, int Index2, bool variable)
+        {
+            IDrawingObject1 Dim1 = (IDrawingObject1)dim;
+
+            //Накладываем на объект ограничение совпадение точек 1
+            IParametriticConstraint FixPoint1 = Dim1.NewConstraint();
+            if (FixPoint1 != null)
+            {
+                FixPoint1.Comment = "FixPoint1";
+                FixPoint1.ConstraintType = ksConstraintTypeEnum.ksCMergePoints;
+                FixPoint1.Partner = obj;
+                FixPoint1.Index = 0;
+                FixPoint1.PartnerIndex = Index1;
+                if (FixPoint1.Create() == false) FixPoint1.Delete();
+            }
+
+            IParametriticConstraint FixPoint2 = Dim1.NewConstraint();
+            if (FixPoint2 != null)
+            {
+                FixPoint2.Comment = "FixPoint2";
+                FixPoint2.ConstraintType = ksConstraintTypeEnum.ksCMergePoints;
+                FixPoint2.Partner = obj;
+                FixPoint2.Index = 1;
+                FixPoint2.PartnerIndex = Index2;
+                if (FixPoint2.Create() == false) FixPoint2.Delete();
+            }
+
+            if (variable)
+            {
+                //Накладываем на объект ограничение "Фиксированный размер"
+                IParametriticConstraint FixetDim = Dim1.NewConstraint();
+                if (FixetDim != null)
                 {
-                    IDrawingObject1 Dim1 = (IDrawingObject1)dim;
-
-                    //Накладываем на объект ограничение совпадение точек 1
-                    IParametriticConstraint FixPoint1 = Dim1.NewConstraint();
-                    if (FixPoint1 != null)
-                    {
-                        FixPoint1.Comment = "FixPoint1";
-                        FixPoint1.ConstraintType = ksConstraintTypeEnum.ksCMergePoints;
-                        FixPoint1.Partner = obj;
-                        FixPoint1.Index = 0;
-                        FixPoint1.PartnerIndex = Index1;
-                    }
-
-                    IParametriticConstraint FixPoint2 = Dim1.NewConstraint();
-                    if (FixPoint2 != null)
-                    {
-                        FixPoint2.Comment = "FixPoint2";
-                        FixPoint2.ConstraintType = ksConstraintTypeEnum.ksCMergePoints;
-                        FixPoint2.Partner = obj;
-                        FixPoint2.Index = 1;
-                        FixPoint2.PartnerIndex = Index2;
-                    }
-
-                    //Накладываем на объект ограничение "Фиксированный размер"
-                    IParametriticConstraint FixetDim = Dim1.NewConstraint();
-                    if (FixetDim != null)
-                    {
-                        FixetDim.Comment = "FixConstraint";
-                        FixetDim.ConstraintType = ksConstraintTypeEnum.ksCFixedDim;
-                        if (!FixetDim.Create()) FixetDim.Delete();
-                    }
+                    FixetDim.Comment = "FixConstraint";
+                    FixetDim.ConstraintType = ksConstraintTypeEnum.ksCFixedDim;
+                    if (FixetDim.Create() == false) FixetDim.Delete();
+                }
 
 
-                    //Накладываем на объект ограничение "Фиксированный размер"
-                    IParametriticConstraint WithVariable = Dim1.NewConstraint();
-                    if (WithVariable != null)
-                    {
-                        WithVariable.Comment = "WithVariable";
-                        WithVariable.ConstraintType = ksConstraintTypeEnum.ksCDimWithVariable;
-                        if (!WithVariable.Create()) WithVariable.Delete();
-
-                    }
+                //Накладываем на объект ограничение "Размер с переменной"
+                IParametriticConstraint WithVariable = Dim1.NewConstraint();
+                if (WithVariable != null)
+                {
+                    WithVariable.Comment = "WithVariable";
+                    WithVariable.ConstraintType = ksConstraintTypeEnum.ksCDimWithVariable;
+                    if (WithVariable.Create() == false) WithVariable.Delete();
 
                 }
             }
         }
 
         //Сплитуем линию
-        public void SplitLine(double nSides, bool dellBaseSim)
+        public async void SplitLine(ILineSegment lineSegment, double nSides, bool dellBaseSim)
         {
-            KmpsAppl.someFlag = false;
-            ISelectionManager selection = this.doc.GetSelectContainer();
-
             this.doc.LockedLayerAsync(88, true);
 
-            SelectObj = SelectObject();
-
-            RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
-            double x = 0, y = 0;
-            int indexSelectObj = 1; int j = 1;
-
-            if (SelectObj != null)
+            if (lineSegment != null)
             {
-                while (j > 0)
-                {
-                    //Селектируем
-                    this.doc.GetChooseContainer().Choose(SelectObj);
-                    SelectPointFlag = true;
-                    //Выбираем
-                    LightDotOnObj(SelectObj, true);
-                    info.Init();
-                    info.prompt = "Выберите точку";
-                    j = this.doc.D5.ksCursor(info, ref x, ref y, phtm);
+                IDrawingObject1 Constrait = (IDrawingObject1)lineSegment;
 
-                    indexSelectObj = NumberPointNear(SelectObj, x, y);
-                    LightDotOnObj(SelectObj, false);
-
-                    SelectPointFlag = false;
-                    this.doc.D5.ksPhantomShowHide("0");
-                }
-            }
-
-            if (selection.SelectedObjects != null)
-            {
-                // Получить массив объектов
-                try
+                List<object> Objs = new List<object>();//лист для линий.
+                object[] segmentsArr = new object[2];
+                if (Constrait.Constraints != null)
                 {
-                    Array arrS = (Array)selection.SelectedObjects;
-                    foreach (object obj in arrS) SplitLine(obj);
+                    foreach (IParametriticConstraint constraint in Constrait.Constraints)
+                    {
+                        if (constraint.ConstraintType == ksConstraintTypeEnum.ksCMergePoints)
+                        {
+                            try
+                            {
+                                foreach (IDrawingObject drawingObject1 in constraint.Partner)
+                                    if (drawingObject1.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
+                                    {
+                                        ILineSegment lineSegments1 = (ILineSegment)drawingObject1;
+                                        segmentsArr[constraint.Index] = lineSegments1;
+                                    }
+                            }
+                            catch
+                            {
+                                //если только один объект то пока не нужно
+                            }
+                        }
+                    }
                 }
-                catch
+
+                #region Создание линий
+                ILineSegments segments = this.doc.GetDrawingContainer().LineSegments;
+                if (segmentsArr[0] != null)
+                    Objs.Add(segmentsArr[0]); //добавляем в список предыдущий
+
+                //Начальная конечная точка
+                System.Windows.Point start = new System.Windows.Point(lineSegment.X1, lineSegment.Y1);
+                System.Windows.Point end = new System.Windows.Point(lineSegment.X2, lineSegment.Y2);
+
+                //удаляем размер
+                if (dellBaseSim)
                 {
-                    //если один объект
-                    SplitLine(selection.SelectedObjects);
+                    foreach (IParametriticConstraint constraint in Constrait.Constraints)
+                        if (constraint.ConstraintType == ksConstraintTypeEnum.ksCMergePoints)
+                            if (constraint.Partner != null)
+                                foreach (object TempObj in constraint.Partner)
+                                    foreach (IParametriticConstraint constraint2 in Constrait.Constraints)
+                                        if (constraint2.ConstraintType == ksConstraintTypeEnum.ksCMergePoints && constraint2.Index != constraint.Index)
+                                            foreach (object TempObj2 in constraint2.Partner)
+                                                if (TempObj == TempObj2)
+                                                {
+                                                    IDrawingObject drawingObject1 = (IDrawingObject)TempObj;
+                                                    if (drawingObject1.DrawingObjectType == DrawingObjectTypeEnum.ksDrLDimension)
+                                                        drawingObject1.Delete();
+                                                }
                 }
+
+                //Удаляем линию
+                lineSegment.Delete();
+
+
+                ILineSegments lineSegments = this.doc.GetDrawingContainer().LineSegments;
+                Point LastPoint = new Point(0, 0);
+
+                for (int i = 0; i < nSides; i++)
+                {
+                    var tasks = new List<Task<object>>();
+                    KmpsAppl.someFlag = false;
+                    ILineSegment line = lineSegments.Add();
+                    line.X1 = start.X + ((end.X - start.X) / nSides * i);
+                    line.Y1 = start.Y + ((end.Y - start.Y) / nSides * i);
+                    line.X2 = start.X + ((end.X - start.X) / nSides * (i + 1));
+                    line.Y2 = start.Y + ((end.Y - start.Y) / nSides * (i + 1));
+                    if (line.Update())
+                    {
+                        tasks.Add(Task<object>.Run(() =>
+                        {
+                            object point = CheckOrMakePoint(line, line.X1, line.Y1, 0, true);
+                            return point; //поинт 1
+                            }));
+                        tasks.Add(Task<object>.Run(() =>
+                        {
+                            object point = CheckOrMakePoint(line, line.X2, line.Y2, 1, true);
+                            return point; //поинт 2
+                            }));
+                        tasks.Add(Task<object>.Run(() =>
+                        {
+                            object obj = SetLineDim(line.X1, line.Y1, line.X2, line.Y2, 20);
+                            return obj; //Размер 1
+                            }));
+                    }
+                    Task.WhenAll(tasks).Wait();
+
+
+                    ILineDimension lineDimension1 = (ILineDimension)tasks[2].Result;
+                    lineDimension1.Update();
+
+                    await Task.Run(() =>
+                    {
+                        this.SetConstrainttDim(lineDimension1, (object)line, 0, 1, true);
+                        //this.doc.GetSelectContainer().Select(line);
+                    });
+
+
+                    Objs.Add((object)line); //Добавляем в писок линию
+
+                    KmpsAppl.someFlag = true;
+
+
+                }
+                if (segmentsArr[1] != null)
+                    Objs.Add(segmentsArr[1]); //добавляем в список следующую
+
+                //Связываем линии
+                for (int i = 0; i < Objs.Count - 1; i++)
+                {
+                    SetConstraintMergePoint(Objs[i], Objs[i + 1], 1, 0);
+                }
+
+                #endregion
+
             }
 
             this.doc.LockedLayerAsync(88, false);
             //Расселектируем
             this.doc.GetChooseContainer().UnchooseAll();
-
-            async void SplitLine(object SpliObj)
-            {
-                if (SpliObj != null)
-                {
-                    IDrawingObject drawingObject = (IDrawingObject)SpliObj;
-
-                    if (drawingObject != null)
-                    {
-                        if (drawingObject.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
-                        {
-                            ILineSegment lineSegment = (ILineSegment)drawingObject;
-                            if (lineSegment != null)
-                            {
-                                IDrawingObject1 Constrait = (IDrawingObject1)SpliObj;
-
-                                List<object> Objs = new List<object>();//лист для линий.
-                                object[] segmentsArr = new object[2];
-                                foreach (IParametriticConstraint constraint in Constrait.Constraints)
-                                    if (constraint.ConstraintType == ksConstraintTypeEnum.ksCMergePoints)
-                                    {
-                                        try
-                                        {
-                                            foreach (IDrawingObject drawingObject1 in constraint.Partner)
-                                                if (drawingObject1.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
-                                                {
-                                                    ILineSegment lineSegments1 = (ILineSegment)drawingObject1;
-                                                    segmentsArr[constraint.Index] = lineSegments1;
-                                                }
-                                        }
-                                        catch
-                                        {
-                                            //если только один объект то пока не нужно
-                                        }
-                                    }
-
-                                #region Создание линий
-                                ILineSegments segments = this.doc.GetDrawingContainer().LineSegments;
-
-                                Objs.Add(segmentsArr[0]); //добавляем в список предыдущий
-
-                                //Начальная конечная точка
-                                System.Windows.Point start = new System.Windows.Point(lineSegment.X1, lineSegment.Y1);
-                                System.Windows.Point end = new System.Windows.Point(lineSegment.X2, lineSegment.Y2);
-
-                                //удаляем размер
-                                if (dellBaseSim)
-                                {
-                                    foreach (IParametriticConstraint constraint in Constrait.Constraints)
-                                        if (constraint.ConstraintType == ksConstraintTypeEnum.ksCMergePoints)
-                                            if (constraint.Partner != null)
-                                                foreach (object TempObj in constraint.Partner)
-                                                    foreach (IParametriticConstraint constraint2 in Constrait.Constraints)
-                                                        if (constraint2.ConstraintType == ksConstraintTypeEnum.ksCMergePoints && constraint2.Index != constraint.Index)
-                                                            foreach (object TempObj2 in constraint2.Partner)
-                                                                if (TempObj == TempObj2)
-                                                                {
-                                                                    IDrawingObject drawingObject1 = (IDrawingObject)TempObj;
-                                                                    if (drawingObject1.DrawingObjectType == DrawingObjectTypeEnum.ksDrLDimension)
-                                                                        drawingObject1.Delete();
-                                                                }
-                                }
-
-                                //Удаляем линию
-                                lineSegment.Delete();
-                                
-
-                                ILineSegments lineSegments = this.doc.GetDrawingContainer().LineSegments;
-                                Point LastPoint = new Point(0, 0);
-
-                                for (int i = 0; i < nSides; i++)
-                                {
-                                    var tasks = new List<Task<object>>();
-                                    KmpsAppl.someFlag = false;
-                                    ILineSegment line = lineSegments.Add();
-                                    line.X1 = start.X + ((end.X - start.X) / nSides * i);
-                                    line.Y1 = start.Y + ((end.Y - start.Y) / nSides * i);
-                                    line.X2 = start.X + ((end.X - start.X) / nSides * (i + 1));
-                                    line.Y2 = start.Y + ((end.Y - start.Y) / nSides * (i + 1));
-                                    if (line.Update())
-                                    {
-                                        tasks.Add(Task<object>.Run(() =>
-                                        {
-                                            object point = CheckOrMakePoint(line, line.X1, line.Y1, 0, true);
-                                            return point; //поинт 1
-                                        }));
-                                        tasks.Add(Task<object>.Run(() =>
-                                        {
-                                            object point = CheckOrMakePoint(line, line.X2, line.Y2, 1, true);
-                                            return point; //поинт 2
-                                        }));
-                                        tasks.Add(Task<object>.Run(() =>
-                                        {
-                                            object obj = SetLineDim(line.X1, line.Y1, line.X2, line.Y2, 20, false);
-                                            return obj; //Размер 1
-                                        }));
-                                        tasks.Add(Task<object>.Run(() =>
-                                        {
-                                            object obj = SetLineDim(x, y, line.X2, line.Y2, 0, false);
-                                            return obj; //поинт 2
-                                        }));
-                                    }
-                                    Task.WhenAll(tasks).Wait();
-
-
-                                    ILineDimension lineDimension1 = (ILineDimension)tasks[2].Result;
-                                    lineDimension1.Update();
-                                    ILineDimension lineDimension2 = (ILineDimension)tasks[3].Result;
-                                    lineDimension2.Update();
-                                    await Task.Run(() =>
-                                    {
-                                        SetConstrainttDim(lineDimension1, (object)line, 0, 1, ksDimensionTextBracketsEnum.ksDimBrackets, true);
-                                    });
-
-                                    await Task.Run(() =>
-                                    {
-                                        SetConstrainttDim(lineDimension2, (object)line, 0, 1, ksDimensionTextBracketsEnum.ksDimBracketsOff, false, SelectObj, indexSelectObj);
-                                    });
-
-                                    
-
-                                    Objs.Add((object)line); //Добавляем в писок линию
-
-                                    KmpsAppl.someFlag = true;
-
-
-                                }
-
-                                Objs.Add(segmentsArr[1]); //добавляем в список следующую
-
-                                //Связываем линии
-                                for (int i = 0; i < Objs.Count - 1; i++)
-                                    SetConstraintMergePoint(Objs[i], Objs[i + 1], 1, 0);
-
-                                #endregion
-
-                            }
-                        }
-
-                    }
-                }
-            }
-
-            KmpsAppl.someFlag = true;
         }
-
-        //Привязка размера
-        public void SetConstrainttDim(object Dim, object DrawObj, int Index1, int Index2, ksDimensionTextBracketsEnum bracketsEnum, bool infoDim, object DrawObj2 = null, int index1_2 = 0)
-        {
-            if (Dim != null)
-            {
-                    IDrawingObject objDim = (IDrawingObject)Dim;
-                    ILineDimension lineDimension = (ILineDimension)objDim;
-                    IDimensionText dimensionText = (IDimensionText)lineDimension;
-                    dimensionText.Brackets = bracketsEnum;
-                    lineDimension.Update();
-
-                    IDrawingObject1 Dim1 = (IDrawingObject1)Dim;
-
-                    IParametriticConstraint FixPoint1 = Dim1.NewConstraint();
-                    //Фиксируем точку на координатах или объекте
-                    if (DrawObj2 != null)
-                    {
-                        if (FixPoint1 != null)
-                        {
-                            FixPoint1.Comment = "FixPoint1";
-                            FixPoint1.ConstraintType = ksConstraintTypeEnum.ksCMergePoints;
-                            FixPoint1.Partner = DrawObj2;
-                            FixPoint1.Index = 0;
-                            FixPoint1.PartnerIndex = index1_2;
-                        }
-                    }
-                    else
-                    {
-                        if (FixPoint1 != null)
-                        {
-                            FixPoint1.Comment = "FixPoint1";
-                            FixPoint1.ConstraintType = ksConstraintTypeEnum.ksCMergePoints;
-                            FixPoint1.Partner = DrawObj;
-                            FixPoint1.Index = 0;
-                            FixPoint1.PartnerIndex = Index1;
-
-                        }
-                    }
-
-
-                    //Фиксируем на объекте
-                    IParametriticConstraint FixPoint2 = Dim1.NewConstraint();
-                    if (FixPoint2 != null)
-                    {
-                        FixPoint2.Comment = "FixPoint2";
-                        FixPoint2.ConstraintType = ksConstraintTypeEnum.ksCMergePoints;
-                        FixPoint2.Partner = DrawObj;
-                        FixPoint2.Index = 1;
-                        FixPoint2.PartnerIndex = Index2;
-                        FixPoint2.Create();
-                    }
-
-                    if (!infoDim)
-                        SetParamToObj(Dim, false, bracketsEnum);               
-            }
-        }
-
+     
         private object SelectObject()
         {
             RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
@@ -1132,27 +1016,34 @@ namespace KompasLib.Tools
         }
 
         //Привязка точки объектов
-        public async static void SetConstraintMergePoint(object Obj1, object Obj2, int Index1, int Index2)
+        public static bool SetConstraintMergePoint(object Obj1, object Obj2, int Index1, int Index2)
         {
-            await Task.Factory.StartNew(() =>
-            {
-                IDrawingObject1 line1_1 = (IDrawingObject1)Obj1;
+            IDrawingObject1 obj1_1 = (IDrawingObject1)Obj1;
 
-                //Накладываем на объект ограничение совпадение точек 1
-                IParametriticConstraint FixPoint1 = line1_1.NewConstraint();
-                if (FixPoint1 != null)
+            //Накладываем на объект ограничение совпадение точек 1
+            ParametriticConstraint FixPoint1 = obj1_1.NewConstraint();
+            if (FixPoint1 != null)
+            {
+                FixPoint1.Comment = "FixPoint1";
+                FixPoint1.ConstraintType = ksConstraintTypeEnum.ksCMergePoints;
+                FixPoint1.Partner = Obj2;
+                FixPoint1.Index = Index1;
+                FixPoint1.PartnerIndex = Index2;
+                if (FixPoint1.Create() == true)
                 {
-                    FixPoint1.Comment = "FixPoint1";
-                    FixPoint1.ConstraintType = ksConstraintTypeEnum.ksCMergePoints;
-                    FixPoint1.Partner = Obj2;
-                    FixPoint1.Index = Index1;
-                    FixPoint1.PartnerIndex = Index2;
-                    FixPoint1.Create();
+                    return true;
                 }
-            });
+                else
+                {
+                    FixPoint1.Delete();
+                    return false;
+                }
+            }
+            return false;
 
         }
 
+        //удаляет ограничение согласно типу
         public static void RemoveConstraint(ksConstraintTypeEnum ksConstraintType, object Obj1, object Obj2 = null, int Index1 = -1)
         {
             IDrawingObject1 obj1_1 = (IDrawingObject1)Obj1;
@@ -1219,13 +1110,18 @@ namespace KompasLib.Tools
                         if (draw1.Constraints != null)
                             foreach (IParametriticConstraint constraint in draw1.Constraints)
                                 if (constraint.ConstraintType == ksConstraintTypeEnum.ksCDimWithVariable)
+                                {
                                     if (VariableValue == 0)
                                     {
-                                        if (VariableValue != 0) SetValToVariableDim(draw1, VariableValue);
                                         dimensionText.Brackets = bracketsEnum;
                                         lineDimension.Update();
                                         return;
                                     }
+                                    else
+                                    {
+                                        SetValToVariableDim(draw1, VariableValue);
+                                    }
+                                }
 
 
                         //Накладываем на объект ограничение "Фиксированный размер"
@@ -1234,7 +1130,7 @@ namespace KompasLib.Tools
                         {
                             FixetDim.Comment = "FixConstraint";
                             FixetDim.ConstraintType = ksConstraintTypeEnum.ksCFixedDim;
-                            if (!FixetDim.Create())
+                            if (FixetDim.Create() == false)
                             {
                                 bracketsEnum = ksDimensionTextBracketsEnum.ksDimBrackets;
                                 FixetDim.Delete();
@@ -1248,7 +1144,7 @@ namespace KompasLib.Tools
                         {
                             WithVariable.Comment = "WithVariable";
                             WithVariable.ConstraintType = ksConstraintTypeEnum.ksCDimWithVariable;
-                            if (!WithVariable.Create())
+                            if (WithVariable.Create() == false)
                             {
                                 bracketsEnum = ksDimensionTextBracketsEnum.ksDimBrackets;
                                 WithVariable.Delete();
@@ -1279,7 +1175,7 @@ namespace KompasLib.Tools
             }
         }
 
-        //Меняет параметр в размере
+        //Возвращает переменную
         public IVariable7 GetObjectVariable(IDrawingObject1 drawing1)
         {
             if (drawing1.Constraints != null)
@@ -1316,8 +1212,12 @@ namespace KompasLib.Tools
                 info.Init();
                 info.SetCursorText("Выберите объект привязки");
                 SelectObj = SelectObject();
-
-                SetConstraintMergePoint(obj, SelectObj, GetMergeIndex(obj), GetMergeIndex(SelectObj));
+                LightDotOnObj(SelectObj, true);
+                double x = 0, y = 0;
+                this.doc.D5.ksCursor(info, ref x, ref y, phtm);
+                int indexSelectObj = NumberPointNear(SelectObj, x, y);
+                LightDotOnObj(SelectObj, false);
+                SetConstraintMergePoint(obj, SelectObj, GetMergeIndex(obj), indexSelectObj);
             }
 
             this.doc.LockedLayerAsync(88, false);
@@ -1501,26 +1401,33 @@ namespace KompasLib.Tools
             IDrawingObject1 drawingObject1 = (IDrawingObject1)obj;
 
             if (drawingObject1 != null)
+            {
                 foreach (ParametriticConstraint constraint in drawingObject1.Constraints)
-                        if (constraint.ConstraintType == ksConstraintTypeEnum.ksCMergePoints)
-                            if (constraint.Partner != null)
-                            foreach (IDrawingObject drawingObject in constraint.Partner)
-                                if (drawingObject.DrawingObjectType == DrawingObjectTypeEnum.ksDrPoint)
+                {
+                    if ((constraint.ConstraintType == ksConstraintTypeEnum.ksCMergePoints) && (constraint.Partner != null))
+                    {
+                        foreach (IDrawingObject drawingObject in constraint.Partner)
+                        {
+                            if (drawingObject.DrawingObjectType == DrawingObjectTypeEnum.ksDrPoint)
+                            {
+                                IPoint point = (IPoint)drawingObject;
+                                if (on && (constraint.Index == indexOn || indexOn == -1))
                                 {
-                                    IPoint point = (IPoint)drawingObject;
-                                    if (on && (constraint.Index == indexOn || indexOn == -1))
-                                    {
-                                        this.doc.GetChooseContainer().Choose(point);
-                                        point.Style = 4;
-                                    }
-                                    else
-                                    {
-                                        this.doc.GetChooseContainer().Unchoose(point);
-                                        point.Style = 1;
-                                    }
+                                    this.doc.GetChooseContainer().Choose(point);
+                                    point.Style = 4;
+                                }
+                                else
+                                {
+                                    this.doc.GetChooseContainer().Unchoose(point);
+                                    point.Style = 1;
+                                }
 
-                                    point.Update();
-                                }                 
+                                point.Update();
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         //Рисует размер между двумя объектами
@@ -1589,7 +1496,7 @@ namespace KompasLib.Tools
                         this.doc.D5.ksCursor(info, ref x2, ref y2, phtm);
                        int indexDrawObj = NumberPointNear(IdObj, x2, y2);
                         this.doc.GetChooseContainer().Unchoose(IdObj);
-                        SetConstrainttDim(SetLineDim(x, y, x2, y2, 0, true), IdObj, 0,indexDrawObj, ksDimensionTextBracketsEnum.ksDimBracketsOff, false, SelectObj, indexSelectObj);
+                        SetConstrainttDim(SetLineDim(x, y, x2, y2, 0), IdObj, 0,indexDrawObj, false);
                         LightDotOnObj(IdObj, false);
                     }
                 }
@@ -1600,9 +1507,9 @@ namespace KompasLib.Tools
         }
 
         //Создает или обновляет линию
-        public async void UpdateOrMakeLine(double Value, bool Adding, bool single, dynamic objets)
+        public async void MakeLine(double LenthValue, double Angle, bool Adding, bool single)
         {
-            KmpsAppl.someFlag = false;
+            this.WorkFlag = true;
             if (Adding)
             {
                 //проверяем есть ли объекты
@@ -1663,13 +1570,13 @@ namespace KompasLib.Tools
 
                     if (lastLine.Last() == lastLine[0])
                     {
-                        lineSegment.X2 = Value;
+                        lineSegment.X2 = LenthValue;
                         lineSegment.Y2 = lastLine[0].Y2;
                     }
                 }
                 else //Если нет последнего объекта.
                 {
-                    lineSegment.Length = Value;
+                    lineSegment.Length = LenthValue;
                     lineSegment.X1 = 0;
                     lineSegment.Y1 = 0;
                     lineSegment.Angle = 90;
@@ -1689,7 +1596,7 @@ namespace KompasLib.Tools
                     }),
                         Task<object>.Run(() =>
                         {
-                            return (object)SetLineDim(lineSegment.X1, lineSegment.Y1, lineSegment.X2, lineSegment.Y2, 20, true); ; //Размер 1
+                            return (object)SetLineDim(lineSegment.X1, lineSegment.Y1, lineSegment.X2, lineSegment.Y2, 20); ; //Размер 1
                     })
                     };
 
@@ -1731,10 +1638,10 @@ namespace KompasLib.Tools
                     await Task.Run(() =>
                     {
                         //Связываем размер с линией
-                        SetConstrainttDim(lineDimension, (object)lineSegment, 0, 1, ksDimensionTextBracketsEnum.ksDimBracketsOff, false);
+                        SetConstrainttDim(lineDimension, (object)lineSegment, 0, 1, true);
 
                         //Фиксируем и даем параметр
-                        SetValToVariableDim((IDrawingObject1)lineDimension, Value);
+                        SetValToVariableDim((IDrawingObject1)lineDimension, LenthValue);
 
                         RemoveConstraint(ksConstraintTypeEnum.ksCHorizontal, lineDimension);
                     });
@@ -1743,12 +1650,8 @@ namespace KompasLib.Tools
                     lastLine.Add(lineSegment);
                 }
             }
-            else
-            {
-                if (objets != null)
-                    await UpdateObjects(objets);
-            }
-            KmpsAppl.someFlag = true;
+
+            this.WorkFlag = false;
 
             KmpsAppl.ZoomAll();
 
@@ -1774,9 +1677,9 @@ namespace KompasLib.Tools
                     await Task.Run(() =>
                     {
                         if (single)
-                            SetValToVariableDim(drawingObject1, Value);
+                            SetValToVariableDim(drawingObject1, LenthValue);
                         else
-                            SetValToVariableDim(drawingObject1, Value / drawingObject1s.Count);
+                            SetValToVariableDim(drawingObject1, LenthValue / drawingObject1s.Count);
                     });
 
             }

@@ -37,7 +37,6 @@ namespace KompasLib.Event
         // kdCloseDocument - Документ закрыт
         public bool CloseDocument()
         {
-            TerminateEvents(null, m_Doc, -1, null);
             return true;
         }
 

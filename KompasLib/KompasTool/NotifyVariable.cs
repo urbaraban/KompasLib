@@ -44,10 +44,13 @@ namespace KompasLib.KompasTool
 
         public NotifyVariable(KmpsDoc Doc, string Name, string Index, double DefValue, string DefNote, bool Exteral = false)
         {
-            if (Doc.D71.IsVariableNameValid(Name + Index))
+            if (Doc.D71.IsVariableNameValid(Name + Index) == true)
             {
                 this._variable7 = Doc.D71.AddVariable(Name + Index, DefValue, DefNote);
-                this._variable7.Note = DefNote;
+                if (this._variable7 != null)
+                {
+                    this._variable7.Note = DefNote;
+                }
             }
             else
             {

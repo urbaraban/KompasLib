@@ -1,7 +1,4 @@
 ﻿using KAPITypes;
-using Kompas6API5;
-using Kompas6API7;
-using Kompas6Constants;
 using QRCoder;
 using System;
 using System.Collections.Generic;
@@ -11,6 +8,11 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows;
+using Kompas6API5;
+using Kompas6API7;
+using Kompas6Constants;
+
 
 namespace KompasLib.Tools
 {
@@ -389,6 +391,18 @@ namespace KompasLib.Tools
             
         }
 
+        public Rect MakeGabarit(int objRef)
+        {
+            ksRectangleParam recPar = (ksRectangleParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RectangleParam);
+            ksRectParam spcGabarit = (ksRectParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RectParam);
+            if (this.D5.ksGetObjGabaritRect(objRef, spcGabarit) == 1)
+            {
+                ksMathPointParam mathBop = spcGabarit.GetpBot();
+                ksMathPointParam mathTop = spcGabarit.GetpTop();
+                return new Rect(new System.Windows.Point(mathBop.x, mathBop.y), new System.Windows.Point(mathTop.x, mathTop.y));
+            }
 
+            return new Rect(0,0,0,0);
+        }
     }
 }

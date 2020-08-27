@@ -3,6 +3,7 @@ using Kompas6API5;
 using Kompas6API7;
 using Kompas6Constants;
 using KompasLib.Event;
+using Microsoft.Win32;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -58,6 +59,7 @@ namespace KompasLib.Tools
             {
                 this.doc = value;
                 OnPropertyChanged("Doc");
+                OpenedDoc?.Invoke(this, value);
             }
         }
 
@@ -91,20 +93,25 @@ namespace KompasLib.Tools
 
         }
 
+        [STAThread]
         public bool Connect() 
         {
             if (KmpsAppl.KompasAPI == null)
             {
-                string progId = "KOMPAS.Application.5";
+
+                string progId = string.Empty;
+#if __LIGHT_VERSION__
+				progId = "KOMPASLT.Application.5";
+#else
+                progId = "KOMPAS.Application.5";
+#endif
                 try
                 {
-                    object Kompas = Marshal.GetActiveObject(progId);
-                    if (Kompas != null)
-                        KmpsAppl.KompasAPI = (KompasObject)Kompas;
+                        KmpsAppl.KompasAPI = (KompasObject)Marshal.GetActiveObject(progId);
                 }
-                catch (InvalidCastException e)
+                catch (Exception)
                 {
-                    MessageBox.Show(e.Message);
+                    MessageBox.Show("Не найден активный объект", "Сообщение", MessageBoxButton.OK);
                     return false;
                 }
 
@@ -206,11 +213,11 @@ namespace KompasLib.Tools
                 {
                     int[] YesType = { 1, 4, 9, 35, 27 };
 
-                    for (int i = 0; i < YesType.Length; i++)
-                    {
+                   // for (int i = 0; i < YesType.Length; i++)
+                    //{
                         if (!BaseEvent.FindEvent(typeof(DocumentEvent), tempDoc, 0 /*YesType[i]*/))
                              AdviseDoc((Kompas6API5.ksDocumentFileNotify_Event)KmpsAppl.KompasAPI.ksGetDocumentByReference(tempDoc.D5.reference), KmpsAppl.KompasAPI.ksGetDocumentType(tempDoc.D5.reference), 0 /*YesType[i]*/);
-                    }
+                    //}
 
                     this.Doc = tempDoc;
                     this.OpenedDoc?.Invoke(this, this.Doc);
@@ -358,6 +365,57 @@ namespace KompasLib.Tools
                 ConnectBoolEvent?.Invoke(null, false);
             }
         }
+
+        #region Реализаця интерфейса IDisposable
+        public void Dispose()
+        {
+            if (KompasAPI != null)
+            {
+                Marshal.ReleaseComObject(KompasAPI);
+                GC.SuppressFinalize(KompasAPI);
+                KompasAPI = null;
+            }
+        }
+        #endregion
+
+        #region COM Registration
+        // Эта функция выполняется при регистрации класса для COM
+        // Она добавляет в ветку реестра компонента раздел Kompas_Library,
+        // который сигнализирует о том, что класс является приложением Компас,
+        // а также заменяет имя InprocServer32 на полное, с указанием пути.
+        // Все это делается для того, чтобы иметь возможность подключить
+        // библиотеку на вкладке ActiveX.
+        [ComRegisterFunction]
+        public static void RegisterKompasLib(Type t)
+        {
+            try
+            {
+                RegistryKey regKey = Registry.LocalMachine;
+                string keyName = @"SOFTWARE\Classes\CLSID\{" + t.GUID.ToString() + "}";
+                regKey = regKey.OpenSubKey(keyName, true);
+                regKey.CreateSubKey("Kompas_Library");
+                regKey = regKey.OpenSubKey("InprocServer32", true);
+                regKey.SetValue(null, System.Environment.GetFolderPath(Environment.SpecialFolder.System) + @"\mscoree.dll");
+                regKey.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format("При регистрации класса для COM-Interop произошла ошибка:\n{0}", ex));
+            }
+        }
+
+
+        // Эта функция удаляет раздел Kompas_Library из реестра
+        [ComUnregisterFunction]
+        public static void UnregisterKompasLib(Type t)
+        {
+            RegistryKey regKey = Registry.LocalMachine;
+            string keyName = @"SOFTWARE\Classes\CLSID\{" + t.GUID.ToString() + "}";
+            RegistryKey subKey = regKey.OpenSubKey(keyName, true);
+            subKey.DeleteSubKey("Kompas_Library");
+            subKey.Close();
+        }
+        #endregion
 
     }
 }

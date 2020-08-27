@@ -12,7 +12,7 @@ namespace KompasLib.KompasTool
 {
     public class ContourCalc
     {
-        public static PathGeometry GetPoint(KmpsDoc doc, double crs, bool add, bool cursor = true)
+        public static PathGeometry GetGeometry(KmpsDoc doc, double crs, bool add, bool cursor = true)
         {
             Point Offcet = new Point(0, 0);
 

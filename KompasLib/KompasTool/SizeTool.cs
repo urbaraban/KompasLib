@@ -1060,6 +1060,74 @@ namespace KompasLib.Tools
                                             constraint.Delete();
         }
 
+        public static Tuple<double, double> GetIContourPerimentr (IContour contour)
+        {
+            if (contour != null)
+            {
+               double TLine = 0, TCurve = 0;
+
+               for (int i = 0; i < contour.Count; i++)
+                {
+                    IContourSegment pDrawObj = (IContourSegment)contour.Segment[i];
+                    // Получить тип объекта
+                    // В зависимости от типа вывести сообщение для данного типа объектов
+                    if (pDrawObj is IContourLineSegment contourLineSegment)
+                    {
+                        TLine += contourLineSegment.Length;
+                    }
+                    else
+                    {
+                        ICurve2D curve2d = pDrawObj.Curve2D;
+                        TCurve += curve2d.Length;
+                    }
+                }
+                return new Tuple<double, double>(TLine, TCurve);
+            }
+            return new Tuple<double, double>(0, 0);
+        }
+
+        public static Tuple<double, double> IntersectionTwoIContour(IContour contour1, IContour contour2)
+        {
+            double LineInt = 0, CurveInt = 0;
+
+            for (int j = 0; j < contour1.Count; j++)
+            {
+                IContourSegment segment = (IContourSegment)contour1.Segment[j];
+
+                for (int k = 0; k < contour2.Count; k++)
+                {
+                    IContourSegment segment2 = (IContourSegment)contour2.Segment[k];
+
+                    //Получаем крайние точки пересечения
+                    if (segment.Curve2D != null)
+                    {
+                        double[] intersecArr = segment.Curve2D.Intersect(segment2.Curve2D);
+                        if (intersecArr != null)
+                        {
+                            if (intersecArr.Length > 3)
+                            {
+                                //Узнаем длинну
+                                double lenth = segment.Curve2D.GetDistancePointPoint(intersecArr[0], intersecArr[1], intersecArr[2], intersecArr[3]);
+                                if (segment.SegmentType == ksContourSegmentEnum.ksCSLineSeg)
+                                {
+                                    LineInt += lenth;
+                                }
+                                else
+                                {
+                                    CurveInt += lenth;
+                                }
+
+                                //Если она больше, то нет смысла сравнивать дальше.
+                                if (lenth >= segment.Curve2D.Length)
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return new Tuple<double, double>(LineInt, CurveInt);
+        }
 
         public async Task SetVariableToDim(bool dell, ksDimensionTextBracketsEnum brackets, double VariableValue = 0)
         {

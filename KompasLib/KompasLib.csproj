@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>KompasLib</RootNamespace>
     <AssemblyName>KompasLib</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -139,6 +139,7 @@
     <Compile Include="KompasEvent\Object2DEvent.cs" />
     <Compile Include="KompasEvent\SelectMngEvent.cs" />
     <Compile Include="KompasTool\ContourCalc.cs" />
+    <Compile Include="KompasTool\EasyCeilingReader.cs" />
     <Compile Include="KompasTool\HlpClasses.cs" />
     <Compile Include="KompasTool\KmpsAppl.cs" />
     <Compile Include="KompasTool\KmpsAttr.cs" />

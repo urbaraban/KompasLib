@@ -650,14 +650,6 @@ namespace KompasLib.Tools
                 dimensionText.DeviationOn = false; //Погрешности
                 dimensionText.TextAlign = ksDimensionTextAlignEnum.ksDimACentre;
 
-                ITextLine textLine = dimensionText.NominalText;
-                foreach (ITextItem textItem in textLine.TextItems)
-                {
-                    ITextFont textFont = (ITextFont)textItem;
-                    textFont.Height = 14;
-                    textItem.Update();
-                }
-
                 //Параметры оформления
                 dimensionParams.ArrowPos = ksDimensionArrowPosEnum.ksDimArrowInside;
                 dimensionParams.ArrowType1 = ksArrowEnum.ksLeaderWithoutArrow;
@@ -665,6 +657,16 @@ namespace KompasLib.Tools
                 dimensionParams.TextBase = ksDimensionBaseEnum.ksDimBaseCenter;
 
                 lineDimension.LayerNumber = 88;
+                lineDimension.Update();
+
+                ITextLine textLine = dimensionText.NominalText;
+                foreach (ITextItem textItem in textLine.TextItems)
+                {
+                    ITextFont textFont = (ITextFont)textItem;
+                    textFont.Height = height;
+                    textFont.Underline = true;
+                }
+
                 lineDimension.Update();
 
                 this.doc.GiveLayer(0);
@@ -989,7 +991,32 @@ namespace KompasLib.Tools
             //Расселектируем
             this.doc.GetChooseContainer().UnchooseAll();
         }
+
+        /// <summary>
+        /// Make rectangle in work zone
+        /// </summary>
+        /// <param name="X"></param>
+        /// <param name="Y"></param>
+        /// <param name="Width"></param>
+        /// <param name="Height"></param>
+        public async void MakeRectangle(double X, double Y, double Width, double Height)
+        {
+            Rectangles rectangles = this.doc.GetDrawingContainer().Rectangles;
+
+            _Rectangle rectangle = rectangles.Add();
+
+            rectangle.X = X;
+            rectangle.Y = Y;
+            rectangle.Width = Width;
+            rectangle.Height = Height;
+
+            rectangle.Update();
+        }
      
+        /// <summary>
+        /// Get selection object
+        /// </summary>
+        /// <returns></returns>
         private object SelectObject()
         {
             RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);

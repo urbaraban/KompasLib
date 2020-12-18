@@ -4,15 +4,17 @@ using Kompas6API7;
 using Kompas6Constants;
 using KompasLib.Tools;
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using reference = System.Int32;
 
 namespace KompasLib.KompasTool
 {
     public class ContourCalc
     {
-        public static PathGeometry GetGeometry(KmpsDoc doc, double crs, bool add, bool cursor = true)
+        public static List<Shape> GetGeometry(KmpsDoc doc, double crs, bool add, bool cursor = true)
         {
             Point Offcet = new Point(0, 0);
 
@@ -54,7 +56,8 @@ namespace KompasLib.KompasTool
                 Iterator1.ksCreateIterator(ldefin2d.ALL_OBJ, macroObject.Reference);
 
                 reference refContour1 = Iterator1.ksMoveIterator("F");
-                PathGeometry path = new PathGeometry();
+
+                List<Shape> shapes = new List<Shape>();
 
                 // contoursList.DisplayName = doc.D7.Name;
 
@@ -68,15 +71,19 @@ namespace KompasLib.KompasTool
                 {
                     IContour contour = doc.Macro.GiveContour(refContour1);
 
-                    if (contour != null)
-                        path.Figures.Add(TraceContour(contour));
+                    if (contour != null) {
+                        shapes.Add(new Path
+                        {
+                            Data = TraceContour(contour)
+                        });
+                    }
 
                     refContour1 = Iterator1.ksMoveIterator("N"); //Двигаем итератор 1
                 }
 
                 Iterator1.ksDeleteIterator(); //Удаляем итератор 1 после полного перебора
 
-                return path;
+                return shapes;
 
                 #endregion
             }
@@ -84,7 +91,7 @@ namespace KompasLib.KompasTool
 
             return null;
 
-            PathFigure TraceContour(IContour contour)
+            PathGeometry TraceContour(IContour contour)
             {
                 if (contour != null)
                 {
@@ -138,7 +145,10 @@ namespace KompasLib.KompasTool
                         }
                     }
                     pathFigure.IsClosed = true;
-                    return pathFigure;
+
+                    PathGeometry pathGeometry = new PathGeometry();
+                    pathGeometry.Figures.Add(pathFigure);
+                    return pathGeometry;
                 }
                 return null;
             }

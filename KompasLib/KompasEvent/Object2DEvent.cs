@@ -6,8 +6,6 @@
 
 //#define __LIGHT_VERSION__
 using Kompas6API5;
-using Kompas6API7;
-using KompasLib.Tools;
 using System;
 
 namespace KompasLib.Event

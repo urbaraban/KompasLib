@@ -225,7 +225,7 @@ namespace KompasLib.Tools
             }
         }
 
-        public  bool CreateDoc()
+        public bool CreateDoc()
         {
             if (KmpsAppl.KompasAPI != null)
             {
@@ -251,11 +251,7 @@ namespace KompasLib.Tools
                         docPar.type = (int)DocType.lt_DocFragment;
                         docPar.author = Environment.UserName;
                         docPar.comment = "KPCm";
-                        if (doc2d.ksCreateDocument(docPar))
-                        {
-                            return true;
-                        }
-                        else return false;
+                        return doc2d.ksCreateDocument(docPar);
                     }
                 }
             }

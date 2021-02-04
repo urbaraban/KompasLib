@@ -7,37 +7,42 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using System.Windows.Shapes;
 using reference = System.Int32;
 
 namespace KompasLib.KompasTool
 {
     public class ContourCalc
     {
-        public static List<Shape> GetGeometry(KmpsDoc doc, double crs, bool add, bool cursor = true)
+        public static GeometryGroup GetGeometry(KmpsDoc doc, double crs, bool add, bool cursor = true)
         {
-            Point Offcet = new Point(0, 0);
-
             if (KmpsAppl.KompasAPI != null)
             {
-                #region получение контура
-                double x = 0, y = 0;
-                RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
-
-                //Ищем или находим макрообъект по индексу потолка
                 IMacroObject macroObject = doc.Macro.FindCeilingMacro("0");
-                //Создаем если нет
-                if (macroObject == null) macroObject = doc.Macro.MakeCeilingMacro("0");
-
-                if (cursor)
+                #region получение контура
+                if (doc.GetSelectContainer().SelectedObjects != null)
                 {
-                    if (!add)
+                    macroObject = SelectObjToMacro(doc.GetSelectContainer());
+                }
+                else
+                {
+                    double x = 0, y = 0;
+                    RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
+
+                    //Ищем или находим макрообъект по индексу потолка
+                    
+                    //Создаем если нет
+                    if (macroObject == null) macroObject = doc.Macro.MakeCeilingMacro("0");
+
+                    if (cursor)
                     {
-                        doc.Macro.RemoveCeilingMacro("0");
-                        macroObject = doc.Macro.MakeCeilingMacro("0");
+                        if (add == false)
+                        {
+                            doc.Macro.RemoveCeilingMacro("0");
+                            macroObject = doc.Macro.MakeCeilingMacro("0");
+                        }
+                        doc.D5.ksCursor(info, ref x, ref y, 0);
+                        if (!doc.Macro.AddCeilingMacro(doc.D5.ksMakeEncloseContours(0, x, y), "0")) MessageBox.Show("Контур не добавили", "Ошибка"); //Добавляем ksMakeEncloseContours
                     }
-                    doc.D5.ksCursor(info, ref x, ref y, 0);
-                    if (!doc.Macro.AddCeilingMacro(doc.D5.ksMakeEncloseContours(0, x, y), "0")) MessageBox.Show("Контур не добавили", "Ошибка"); //Добавляем ksMakeEncloseContours
                 }
 
 
@@ -47,8 +52,7 @@ namespace KompasLib.KompasTool
                 {
                     ksMathPointParam mathBop = spcGabarit.GetpBot();
                     ksMathPointParam mathTop = spcGabarit.GetpTop();
-                    Offcet.X = mathBop.x + (mathTop.x - mathBop.x) / 2;
-                    Offcet.Y = mathBop.y + (mathTop.y - mathBop.y) / 2;
+
                 }
 
                 ksInertiaParam inParam = (ksInertiaParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_InertiaParam);
@@ -57,7 +61,7 @@ namespace KompasLib.KompasTool
 
                 reference refContour1 = Iterator1.ksMoveIterator("F");
 
-                List<Shape> shapes = new List<Shape>();
+                GeometryGroup geometryGroup = new GeometryGroup();
 
                 // contoursList.DisplayName = doc.D7.Name;
 
@@ -72,10 +76,7 @@ namespace KompasLib.KompasTool
                     IContour contour = doc.Macro.GiveContour(refContour1);
 
                     if (contour != null) {
-                        shapes.Add(new Path
-                        {
-                            Data = TraceContour(contour)
-                        });
+                        geometryGroup.Children.Add(TraceContour(contour));
                     }
 
                     refContour1 = Iterator1.ksMoveIterator("N"); //Двигаем итератор 1
@@ -83,7 +84,7 @@ namespace KompasLib.KompasTool
 
                 Iterator1.ksDeleteIterator(); //Удаляем итератор 1 после полного перебора
 
-                return shapes;
+                return geometryGroup;
 
                 #endregion
             }
@@ -108,25 +109,24 @@ namespace KompasLib.KompasTool
                                 IContourLineSegment contourLineSegment = (IContourLineSegment)pDrawObj;
 
                                 if (i == 0)
-                                    pathFigure.StartPoint = new Point(contourLineSegment.X1 - Offcet.X, -contourLineSegment.Y1 + Offcet.Y);
+                                    pathFigure.StartPoint = new Point(contourLineSegment.X1, -contourLineSegment.Y1);
 
-                                pathFigure.Segments.Add(new System.Windows.Media.LineSegment(new Point(contourLineSegment.X2 - Offcet.X, -contourLineSegment.Y2 + Offcet.Y), true));
+                                pathFigure.Segments.Add(new System.Windows.Media.LineSegment(new Point(contourLineSegment.X2, -contourLineSegment.Y2), true));
                                 break;
                             case ksContourSegmentEnum.ksCSArc:
                                 IContourArc contourArc = (IContourArc)pDrawObj;
 
                                 if (i == 0)
-                                    pathFigure.StartPoint = new Point(contourArc.X1 - Offcet.X, -contourArc.Y1 + Offcet.Y);
+                                    pathFigure.StartPoint = new Point(contourArc.X1, -contourArc.Y1);
 
                                 double RotateAngel = contourArc.Direction ? Math.Abs(contourArc.Angle1 + 360 - contourArc.Angle2) % 360 : Math.Abs(contourArc.Angle2 + 360 - contourArc.Angle1) % 360;
 
                                 pathFigure.Segments.Add(
                                                 new ArcSegment(
-                                                    new Point(contourArc.X2 - Offcet.X, -contourArc.Y2 + Offcet.Y),
+                                                    new Point(contourArc.X2, -contourArc.Y2),
                                                 new Size(contourArc.Radius, contourArc.Radius), RotateAngel, RotateAngel > 180,
                                                 contourArc.Direction ? SweepDirection.Clockwise : SweepDirection.Counterclockwise,
                                                 true));
-
                                 break;
 
                             default:
@@ -134,17 +134,17 @@ namespace KompasLib.KompasTool
                                 PolyLineSegment polyLineSegment = new PolyLineSegment();
 
                                 if (i == 0)
-                                    pathFigure.StartPoint = new Point(arrayCurve[0] - Offcet.X, -arrayCurve[1] + Offcet.Y);
+                                    pathFigure.StartPoint = new Point(arrayCurve[0], -arrayCurve[1]);
 
                                 for (int j = 2; j < arrayCurve.Length; j += 2)
                                 {
-                                    polyLineSegment.Points.Add(new Point(arrayCurve[j] - Offcet.X, -arrayCurve[j + 1] + Offcet.Y));
+                                    polyLineSegment.Points.Add(new Point(arrayCurve[j], -arrayCurve[j + 1]));
                                 }
                                 pathFigure.Segments.Add(polyLineSegment);
                                 break;
                         }
                     }
-                    pathFigure.IsClosed = true;
+                    pathFigure.IsClosed = contour.Closed;
 
                     PathGeometry pathGeometry = new PathGeometry();
                     pathGeometry.Figures.Add(pathFigure);
@@ -152,7 +152,70 @@ namespace KompasLib.KompasTool
                 }
                 return null;
             }
-        }
 
+            IMacroObject SelectObjToMacro(ISelectionManager selectionManager)
+            {
+                List<IContour> contours = GetContourFromSelectObj(selectionManager);
+
+                doc.Macro.RemoveCeilingMacro("0");
+                doc.Macro.MakeCeilingMacro("0");
+
+                foreach (IContour contour in contours)
+                {
+                    doc.Macro.AddCeilingMacro(contour.Reference, "0");
+                }
+
+                return doc.Macro.FindCeilingMacro("0");
+            }
+
+            List<IContour> GetContourFromSelectObj(ISelectionManager selectionManager)
+            {
+                if (selectionManager.SelectedObjects != null)
+                {
+                    List<IContour> contours = new List<IContour>();
+
+                    int[] YesType = { 1, 2, 3, 8, 26, 28, 31, 32, 33, 34, 35, 36, 80 };
+
+                    IDrawingContours drawingContours = doc.GetDrawingContainer().DrawingContours;
+
+                    // Получить массив объектов
+                    try
+                    {
+                        Array arrS = (Array)selectionManager.SelectedObjects;
+
+                        foreach (object obj in arrS) contours.Add(MakeContour(obj));
+                    }
+                    catch
+                    {
+                        //если один объект
+                        contours.Add(MakeContour(selectionManager.SelectedObjects));
+                    }
+                    
+
+                    return contours;
+
+                    IContour MakeContour(object obj)
+                    {
+                        IDrawingContour drawingContour = drawingContours.Add();
+                        IContour contour = (IContour)drawingContour;
+                        IDrawingObject pObj = (IDrawingObject)obj;
+
+                        if (IndexOfTrue(YesType, (int)pObj.DrawingObjectType))
+                            contour.CopyCurve(pObj, false);
+                        drawingContour.Update();
+                        return contour;
+                    }
+                }
+                return null;
+
+                bool IndexOfTrue(int[] arr, int value)
+                {
+                    for (int i = 0; i < arr.Length; i++)
+                        if (arr[i] == value) return true;
+                    return false;
+                }
+
+            }
+        }
     }
 }

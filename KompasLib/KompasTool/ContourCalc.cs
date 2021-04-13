@@ -75,8 +75,12 @@ namespace KompasLib.KompasTool
                 {
                     IContour contour = doc.Macro.GiveContour(refContour1);
 
-                    if (contour != null) {
-                        geometryGroup.Children.Add(TraceContour(contour));
+                    if (contour != null) 
+                    {
+                        foreach (Geometry geometry in TraceContour(contour).Children)
+                        {
+                            geometryGroup.Children.Add(geometry);
+                        }
                     }
 
                     refContour1 = Iterator1.ksMoveIterator("N"); //Двигаем итератор 1
@@ -92,12 +96,11 @@ namespace KompasLib.KompasTool
 
             return null;
 
-            PathGeometry TraceContour(IContour contour)
+            GeometryGroup TraceContour(IContour contour)
             {
+                GeometryGroup geometryGroup = new GeometryGroup();
                 if (contour != null)
                 {
-                    PathFigure pathFigure = new PathFigure();
-
                     for (int i = 0; i < contour.Count; i++)
                     {
                         IContourSegment pDrawObj = (IContourSegment)contour.Segment[i];
@@ -107,17 +110,16 @@ namespace KompasLib.KompasTool
                         {
                             case ksContourSegmentEnum.ksCSLineSeg:
                                 IContourLineSegment contourLineSegment = (IContourLineSegment)pDrawObj;
-
-                                if (i == 0)
-                                    pathFigure.StartPoint = new Point(contourLineSegment.X1, -contourLineSegment.Y1);
-
-                                pathFigure.Segments.Add(new System.Windows.Media.LineSegment(new Point(contourLineSegment.X2, -contourLineSegment.Y2), true));
+                                geometryGroup.Children.Add(
+                                    new LineGeometry(new Point(contourLineSegment.X1, -contourLineSegment.Y1),
+                                    new Point(contourLineSegment.X2, -contourLineSegment.Y2)));
                                 break;
                             case ksContourSegmentEnum.ksCSArc:
                                 IContourArc contourArc = (IContourArc)pDrawObj;
 
-                                if (i == 0)
-                                    pathFigure.StartPoint = new Point(contourArc.X1, -contourArc.Y1);
+                                PathFigure pathFigure = new PathFigure();
+
+                                pathFigure.StartPoint = new Point(contourArc.X1, -contourArc.Y1);
 
                                 double RotateAngel = contourArc.Direction ? Math.Abs(contourArc.Angle1 + 360 - contourArc.Angle2) % 360 : Math.Abs(contourArc.Angle2 + 360 - contourArc.Angle1) % 360;
 
@@ -127,28 +129,31 @@ namespace KompasLib.KompasTool
                                                 new Size(contourArc.Radius, contourArc.Radius), RotateAngel, RotateAngel > 180,
                                                 contourArc.Direction ? SweepDirection.Clockwise : SweepDirection.Counterclockwise,
                                                 true));
+
+                                geometryGroup.Children.Add(new PathGeometry(new List<PathFigure>() { pathFigure }));
                                 break;
 
                             default:
                                 double[] arrayCurve = pDrawObj.Curve2D.CalculatePolygonByStep(crs / pDrawObj.Curve2D.Length);
                                 PolyLineSegment polyLineSegment = new PolyLineSegment();
 
-                                if (i == 0)
-                                    pathFigure.StartPoint = new Point(arrayCurve[0], -arrayCurve[1]);
+                                PathFigure pathFigureCurve = new PathFigure();
+
+                                pathFigureCurve.StartPoint = new Point(arrayCurve[0], -arrayCurve[1]);
 
                                 for (int j = 2; j < arrayCurve.Length; j += 2)
                                 {
                                     polyLineSegment.Points.Add(new Point(arrayCurve[j], -arrayCurve[j + 1]));
                                 }
-                                pathFigure.Segments.Add(polyLineSegment);
+                                pathFigureCurve.Segments.Add(polyLineSegment);
+
+                                geometryGroup.Children.Add(new PathGeometry(new List<PathFigure>() { pathFigureCurve }));
                                 break;
                         }
                     }
-                    pathFigure.IsClosed = contour.Closed;
+                    //pathFigure.IsClosed = contour.Closed;
 
-                    PathGeometry pathGeometry = new PathGeometry();
-                    pathGeometry.Figures.Add(pathFigure);
-                    return pathGeometry;
+                    return geometryGroup;
                 }
                 return null;
             }

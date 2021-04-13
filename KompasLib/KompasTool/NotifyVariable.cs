@@ -68,5 +68,6 @@ namespace KompasLib.KompasTool
         {
             this._variable7.Delete();
         }
+
     }
 }

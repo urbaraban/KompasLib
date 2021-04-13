@@ -370,6 +370,55 @@ namespace KompasLib.Tools
         }
 
      
+        public async void MakeText(string Text, double TextSize, double x, double y)
+        {
+            IDrawingTexts drawingTexts = this.GetDrawingContainer().DrawingTexts;
+            IDrawingText drawingText = drawingTexts.Add();
+            IText txt = (IText)drawingText;
+            drawingText.X = x;
+            drawingText.Y = y;
+            drawingText.Allocation = ksAllocationEnum.ksAlLeft;
+
+            foreach (string str in Text.Split('\n'))
+            {
+                ITextLine textLine = txt.Add();
+                //KmpsAppl.ProgressBar.SetProgress(s, "Строка: " + s, false);
+
+                if (str != string.Empty)
+                {
+                    ITextItem textItem = textLine.AddBefore(0);
+
+                    ITextFont fontItem = (ITextFont)textItem;
+                    fontItem.Bold = true;
+                    fontItem.Italic = true;
+
+                    textItem.Str = str;
+                    textItem.Update();
+                }
+            }
+
+            foreach (ITextLine line in txt.TextLines)
+            {
+                await Task.Run(() =>
+                {
+                    List<ITextItem> ItemList = new List<ITextItem>();
+                    foreach (ITextItem item in line.TextItems)
+                    {
+                        ITextFont textFont = (ITextFont)item;
+                        textFont.Height = TextSize;
+                        ItemList.Add(item);
+                    }
+
+                    for (int Li = 0; Li < ItemList.Count; Li++)
+                    {
+                        ItemList[Li].Update();
+                        drawingText.Update();
+                    }
+                });
+            }
+
+        }
+
         public void DeleteSelectObj()
         {
             if (KmpsAppl.KompasAPI != null)

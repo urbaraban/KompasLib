@@ -14,7 +14,7 @@ namespace KompasLib.Tools
 {
     public class SizeTool
     {
-        private KmpsDoc doc;
+        private readonly KmpsDoc doc;
 
         private List<ComboData> forDimList = new List<ComboData>();
 
@@ -27,8 +27,8 @@ namespace KompasLib.Tools
         private static ILineDimension firstDim = null;
         private static readonly List<ILineSegment> lastLine = new List<ILineSegment>();
 
-        private static int[] YesType = { 1, 2, 3, 8, 26, 28, 31, 32, 33, 34, 35, 36, 80 };
-        private static int[] DimType = { 9, 10, 13, 14, 15, 43 };
+        private static readonly int[] YesType = { 1, 2, 3, 8, 26, 28, 31, 32, 33, 34, 35, 36, 80 };
+        private static readonly int[] DimType = { 9, 10, 13, 14, 15, 43 };
 
         public SizeTool(KmpsDoc Doc)
         {
@@ -198,9 +198,9 @@ namespace KompasLib.Tools
                             this.doc.D5.ksLineSeg(x + (dx - x) / 2, y - kooff, x + (dx - x) / 2, dy + kooff, 3);
                             this.doc.D5.ksLineSeg(x - kooff, y + (dy - y) / 2, dx + kooff, y + (dy - y) / 2, 3);
                             //Ширина
-                            SetText(Math.Round(mathTop.x - mathBop.x, 1).ToString(), mathBop.x + (mathTop.x - mathBop.x) / 2, mathBop.y - kooff * 1.5, ksAllocationEnum.ksAlCentre, 0, true);
+                            SetText(Math.Round(mathTop.x - mathBop.x, 1, MidpointRounding.AwayFromZero).ToString(), mathBop.x + (mathTop.x - mathBop.x) / 2, mathBop.y - kooff * 1.5, ksAllocationEnum.ksAlCentre, 0, true);
                             //Высота
-                            SetText(Math.Round(mathTop.y - mathBop.y, 1).ToString(), mathBop.x - kooff, mathBop.y + (mathTop.y - mathBop.y) / 2, ksAllocationEnum.ksAlCentre, 90, true);
+                            SetText(Math.Round(mathTop.y - mathBop.y, 1, MidpointRounding.AwayFromZero).ToString(), mathBop.x - kooff, mathBop.y + (mathTop.y - mathBop.y) / 2, ksAllocationEnum.ksAlCentre, 90, true);
 
                             //Подпись Y
                             SetText((!xflag ? "<<" : string.Empty) + "Y", x, y - kooff, ksAllocationEnum.ksAlLeft, -90);
@@ -586,13 +586,12 @@ namespace KompasLib.Tools
         {
             this.doc.VisibleLayer(77, false);
             this.doc.VisibleLayer(88, true);
-            ILayer layer = this.doc.GiveLayer(88);
+            _ = this.doc.GiveLayer(88);
 
             ViewsAndLayersManager ViewsMng = this.doc.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
             IView view = views.ActiveView;
 
-            IDrawingContainer drawingContainer = (IDrawingContainer)view;
             ISymbols2DContainer symbols = (ISymbols2DContainer)view;
             IAngleDimension angleDimension = symbols.AngleDimensions.Add(DrawingObjectTypeEnum.ksDrADimension);
             IDimensionParams dimensionParams = (IDimensionParams)angleDimension;
@@ -999,7 +998,7 @@ namespace KompasLib.Tools
         /// <param name="Y"></param>
         /// <param name="Width"></param>
         /// <param name="Height"></param>
-        public async void MakeRectangle(double X, double Y, double Width, double Height)
+        public void MakeRectangle(double X, double Y, double Width, double Height)
         {
             Rectangles rectangles = this.doc.GetDrawingContainer().Rectangles;
 
@@ -1751,33 +1750,7 @@ namespace KompasLib.Tools
             KmpsAppl.ZoomAll();
 
             //апдейт переменной
-            async Task UpdateObjects(dynamic objects)
-            {
-                List<IDrawingObject1> drawingObject1s = new List<IDrawingObject1>();
-                try
-                {
-                    Array arrS = (Array)objects;
-                    foreach (IDrawingObject obj in arrS)
-                        if(IndexOfTrue(DimType, (int)obj.DrawingObjectType))
-                            drawingObject1s.Add((IDrawingObject1)obj);
-                }
-                catch
-                {
-                    IDrawingObject obj = (IDrawingObject)objects;
-                    if (IndexOfTrue(DimType, (int)obj.DrawingObjectType))
-                        drawingObject1s.Add((IDrawingObject1)obj);
-                }
-
-                foreach (IDrawingObject1 drawingObject1 in drawingObject1s)
-                    await Task.Run(() =>
-                    {
-                        if (single)
-                            SetValToVariableDim(drawingObject1, LenthValue);
-                        else
-                            SetValToVariableDim(drawingObject1, LenthValue / drawingObject1s.Count);
-                    });
-
-            }
+           
 
             void FixFirstLine(object Obj)
             {

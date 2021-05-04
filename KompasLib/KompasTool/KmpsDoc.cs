@@ -86,9 +86,9 @@ namespace KompasLib.Tools
 
                 if (this.GetSelectContainer().SelectedObjects != null)
                 {
-                    try
+                    if (this.GetSelectContainer() is Array array)
                     {
-                        foreach (object obj in this.GetSelectContainer().SelectedObjects)
+                        foreach (object obj in array)
                         {
                             if (obj is IDrawingObject drawingObject)
                             {
@@ -96,7 +96,7 @@ namespace KompasLib.Tools
                             }
                         }
                     }
-                    catch
+                    else
                     {
                         if (this.GetSelectContainer().SelectedObjects is IDrawingObject drawingObject)
                         {
@@ -139,18 +139,16 @@ namespace KompasLib.Tools
         public List<object> GetSelectObjects()
         {
             List<object> objects = new List<object>();
-            try
-            {
-                Array temp = (Array)this.GetSelectContainer().SelectedObjects;
-                foreach (object obj in temp)
+            if (this.GetSelectContainer().SelectedObjects is Array array) 
+            { 
+                foreach (object obj in array)
                 {
                     objects.Add(obj);
                 }
             }
-            catch
+            else
             {
-                object obj = (object)this.GetSelectContainer().SelectedObjects;
-                objects.Add(obj);
+                objects.Add(this.GetSelectContainer().SelectedObjects);
             }
             
             return objects;
@@ -305,19 +303,17 @@ namespace KompasLib.Tools
             if (selection.SelectedObjects != null)
             {
                 // Получить массив объектов
-                try
+                if (selection.SelectedObjects is Array array)
                 {
-                    Array arrS = (Array)selection.SelectedObjects;
                     // Если массив есть
-                    foreach (object obj in arrS)
+                    foreach (object obj in array)
                         DellConstraint(obj);
 
                 }
-                catch
+                else
                 {
                     //если один объект
-                    object pObj = selection.SelectedObjects;
-                    DellConstraint(pObj);
+                    DellConstraint(selection.SelectedObjects);
                 }
 
                 void DellConstraint (object obj)
@@ -426,12 +422,12 @@ namespace KompasLib.Tools
                 dynamic objects = GetSelectContainer().SelectedObjects;
                 if (objects != null)
                 {
-                    try
+                    if (objects is Array array)
                     {
-                        foreach (IDrawingObject drawingObject in objects)
+                        foreach (IDrawingObject drawingObject in array)
                             drawingObject.Delete();
                     }
-                    catch
+                    else
                     {
                         ((IDrawingObject)objects).Delete();
                     }

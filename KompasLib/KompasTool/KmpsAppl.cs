@@ -6,10 +6,8 @@ using KompasLib.Event;
 using Microsoft.Win32;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -344,11 +342,7 @@ namespace KompasLib.Tools
         {
             if (KmpsAppl.someFlag)
             {
-                try
-                {
-                    CreatedObject?.Invoke(null, (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference));
-                }
-                catch { }
+               CreatedObject?.Invoke(null, (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference));
             }
         }
 

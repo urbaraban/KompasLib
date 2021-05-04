@@ -184,13 +184,11 @@ namespace KompasLib.KompasTool
                     IDrawingContours drawingContours = doc.GetDrawingContainer().DrawingContours;
 
                     // Получить массив объектов
-                    try
+                    if (selectionManager.SelectedObjects is Array array)
                     {
-                        Array arrS = (Array)selectionManager.SelectedObjects;
-
-                        foreach (object obj in arrS) contours.Add(MakeContour(obj));
+                        foreach (object obj in array) contours.Add(MakeContour(obj));
                     }
-                    catch
+                    else
                     {
                         //если один объект
                         contours.Add(MakeContour(selectionManager.SelectedObjects));

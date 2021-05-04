@@ -106,14 +106,13 @@ namespace KompasLib.Tools
                 if (selection.SelectedObjects != null)
                 {
                     IDrawingGroup TempGroup = (IDrawingGroup)KmpsAppl.KompasAPI.TransferReference(this.doc.D5.ksNewGroup(0), this.doc.D5.reference);
-                    try
+                    if (selection.SelectedObjects is Array array)
                     {
-                        Array arrS = (Array)selection.SelectedObjects;
                         int i = 0;
-                        KmpsAppl.ProgressBar.Start(i, arrS.Length, "Скрываем размеры", true);
+                        KmpsAppl.ProgressBar.Start(i, array.Length, "Скрываем размеры", true);
 
                         bool tempflag = MessageBox.Show("Скрыть размеры?", "Внимание", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
-                        foreach (object obj in arrS)
+                        foreach (object obj in array)
                         {
                             await Task.Run(() =>
                             {
@@ -126,10 +125,9 @@ namespace KompasLib.Tools
                         }
                         KmpsAppl.ProgressBar.Stop("Закончили", true);
                     }
-                    catch
+                    else
                     {
-                        object pObj = selection.SelectedObjects;
-                        TempGroup.AddObjects(pObj);
+                        TempGroup.AddObjects(selection.SelectedObjects);
                     }
                     this.doc.VisibleLayer(77, true);
                     this.doc.VisibleLayer(88, false);
@@ -210,9 +208,8 @@ namespace KompasLib.Tools
                             ///
                             /// Идем по объектам и проставляем подписи
                             ///
-                            try
-                            {
-                                Array arrS = (Array)TempGroup.Objects[0];
+                            if (TempGroup.Objects[0] is Array arrS) 
+                            { 
                                 KmpsAppl.ProgressBar.Start(0, arrS.Length, "Точка:", true);
                                 for (int i = 0; i < arrS.Length; i++)
                                 {
@@ -221,7 +218,7 @@ namespace KompasLib.Tools
                                 }
                                 KmpsAppl.ProgressBar.Stop("Закончили", true);
                             }
-                            catch
+                            else
                             {
                                 SetPointToObj(TempGroup.Objects[0], mathBop, mathTop);
                             }
@@ -876,16 +873,18 @@ namespace KompasLib.Tools
                     {
                         if (constraint.ConstraintType == ksConstraintTypeEnum.ksCMergePoints)
                         {
-                            try
+                            if (constraint.Partner is Array array)
                             {
-                                foreach (IDrawingObject drawingObject1 in constraint.Partner)
+                                foreach (IDrawingObject drawingObject1 in array)
+                                {
                                     if (drawingObject1.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
                                     {
                                         ILineSegment lineSegments1 = (ILineSegment)drawingObject1;
                                         segmentsArr[constraint.Index] = lineSegments1;
                                     }
+                                }
                             }
-                            catch
+                            else
                             {
                                 //если только один объект то пока не нужно
                             }
@@ -1159,24 +1158,21 @@ namespace KompasLib.Tools
         {
             dynamic objects = this.doc.GiveSelectOrChooseObj();
 
-            if (objects != null)
+            if (objects is Array array)
             {
-                try
-                {
-                    //Перебираем объекты. Определяем что за объект внутри
-                    foreach (object obj in objects)
-                        await Task.Run(() =>
-                        {
-                            if (obj != null)
-                                SetParamToObj(obj, dell, brackets, VariableValue);
-                            });
-                }
-
-                catch
-                {
-                    SetParamToObj((object)objects, dell, brackets, VariableValue);
-                }
+                //Перебираем объекты. Определяем что за объект внутри
+                foreach (object obj in array)
+                    await Task.Run(() =>
+                    {
+                        if (obj != null)
+                            SetParamToObj(obj, dell, brackets, VariableValue);
+                    });
             }
+            else if (objects != null)
+            {
+                SetParamToObj((object)objects, dell, brackets, VariableValue);
+            }
+
         }
 
 
@@ -1284,16 +1280,15 @@ namespace KompasLib.Tools
         {
             this.doc.GetChooseContainer().UnchooseAll();
 
-            object obj = null;
+            object obj;
 
-            try
+            if (this.doc.GetSelectContainer().SelectedObjects is Array array)
+            {
+                obj = array.GetValue(array.Length - 1);
+            }
+            else 
             {
                 obj = this.doc.GetSelectContainer().SelectedObjects;
-            }
-            catch
-            {
-                Array array = this.doc.GetSelectContainer().SelectedObjects;
-                obj = array.GetValue(array.Length - 1);
             }
 
             if (obj != null)
@@ -1341,32 +1336,26 @@ namespace KompasLib.Tools
             KmpsAppl.someFlag = false;
             ISelectionManager selection = this.doc.GetSelectContainer();
 
-            if (selection.SelectedObjects != null)
-            {
-                try
+                if (selection.SelectedObjects is Array array)
                 {
-                    Array arrS = (Array)selection.SelectedObjects;
-
-                    foreach (object obj in arrS)
+                    foreach (object obj in array)
+                    {
                         invert(obj);
+                    }
                 }
-                catch
+                else if (selection.SelectedObjects != null)
                 {
                     invert(selection.SelectedObjects);
                 }
-
-            }
 
             KmpsAppl.someFlag = true;
 
             void invert (object obj)
             {
-                try 
+                if (obj is IBaseLeader bLeader)
                 {
-                    IBaseLeader pObj = (IBaseLeader)obj;
-                    SetPoint(pObj, xinvert);
+                    SetPoint(bLeader, xinvert);
                 }
-                catch { return; }
                 
                 void SetPoint(IBaseLeader baseLeader, bool invertX)
                 {
@@ -1560,14 +1549,14 @@ namespace KompasLib.Tools
                         indexSelectObj = NumberPointNear(SelectObj, x, y);
 
                         //Идем по объектам и выбираем точки привязки
-                        try
-                        {
-                            foreach (IDrawingObject drawingObject in selection.SelectedObjects)
+                        if (selection.SelectedObjects is Array array) 
+                        { 
+                            foreach (IDrawingObject drawingObject in array)
                             {
                                 MakeObjToObjDim(drawingObject);
                             }
                         }
-                        catch
+                        else if (selection.SelectedObjects != null)
                         {
                             MakeObjToObjDim((IDrawingObject)selection.SelectedObjects);
 
@@ -1815,25 +1804,22 @@ namespace KompasLib.Tools
                 List<ILineSegment> segments = new List<ILineSegment>(); //лист для сегментов
                 this.doc.GetChooseContainer().UnchooseAll(); //убираем все выделения
                 ISelectionManager selection = this.doc.GetSelectContainer(); //Получаем выбранные объекты
-                if (selection.SelectedObjects != null)
-                {
-                    try
-                    {
-                        Array arrS = (Array)selection.SelectedObjects;
-                        foreach (IDrawingObject obj in arrS)
-                            if (obj.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
-                                segments.Add((ILineSegment)obj); //Забираем выбранные линии
-                    }
-                    catch
-                    {
-                        object pObj = selection.SelectedObjects;
-                        IDrawingObject obj = (IDrawingObject)pObj;
-                        if (obj != null)
-                            if (obj.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
-                                segments.Add((ILineSegment)obj); //Если линия одна
-                    }
 
+                if (selection.SelectedObjects is Array array)
+                {
+                    foreach (IDrawingObject obj in array)
+                        if (obj.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
+                            segments.Add((ILineSegment)obj); //Забираем выбранные линии
                 }
+                else if (selection.SelectedObjects != null)
+                {
+                    object pObj = selection.SelectedObjects;
+                    IDrawingObject obj = (IDrawingObject)pObj;
+                    if (obj != null)
+                        if (obj.DrawingObjectType == DrawingObjectTypeEnum.ksDrLineSeg)
+                            segments.Add((ILineSegment)obj); //Если линия одна
+                }
+
                 reference RefSelectedObj = -1; int j = -1;
                 while ((segments.Count < 2) && (j != 0)) //Добираем объекты до двух если их количество меньше
                 {
@@ -1855,9 +1841,15 @@ namespace KompasLib.Tools
                 }
                 if (segments.Count < 2) return; //если все еще не набрали, то заканчиваем
                 else
+                {
                     for (int i = 1; i < segments.Count; i++)
+                    {
                         if (!CheckSize(segments[i - 1], segments[i]))
-                        SetConstraintoADim(SetAngleDim(segments[i - 1], segments[i]), ksDimensionTextBracketsEnum.ksDimBracketsOff);
+                        {
+                            SetConstraintoADim(SetAngleDim(segments[i - 1], segments[i]), ksDimensionTextBracketsEnum.ksDimBracketsOff);
+                        }
+                    }
+                }
 
                 this.doc.LockedLayerAsync(88, false);
                 this.doc.GetChooseContainer().UnchooseAll();

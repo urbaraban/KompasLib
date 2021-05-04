@@ -43,18 +43,25 @@ namespace KompasLib.Tools
         {
             if (KmpsAppl.KompasAPI != null)
             {
-                IViewsAndLayersManager ViewsAndLayersManager = this.kmpsAppl.Doc.D7.ViewsAndLayersManager;
-                IViews Views = ViewsAndLayersManager.Views;
-                //получаем текущий вид
-                IView CurView = Views.ActiveView;
-                ILayers Layers = CurView.Layers;
-                ILayer layer = Layers.LayerByNumber[number];
-                if (layer != null)
+                try
                 {
-                    layer.Visible = !status;
-                    layer.Update();
+                    IViewsAndLayersManager ViewsAndLayersManager = this.kmpsAppl.Doc.D7.ViewsAndLayersManager;
+                    IViews Views = ViewsAndLayersManager.Views;
+                    //получаем текущий вид
+                    IView CurView = Views.ActiveView;
+                    ILayers Layers = CurView.Layers;
+                    ILayer layer = Layers.LayerByNumber[number];
+                    if (layer != null)
+                    {
+                        layer.Visible = !status;
+                        layer.Update();
+                    }
+                    return;
                 }
-                return;
+                catch
+                {
+                    return;
+                }
             }
         }
 
@@ -78,28 +85,26 @@ namespace KompasLib.Tools
         //Поиск макрообъекта по имени
         public IMacroObject FindCeilingMacro(string index)
         {
+            IMacroObject pMacroObj = null;
             if (KmpsAppl.KompasAPI != null)
             {
-                IMacroObject pMacroObj = null;
                 IDrawingContainer drawingContainer = this.kmpsAppl.Doc.GetDrawingContainer();
                 if (drawingContainer != null)
                 {
-                    try
+                    if (drawingContainer.MacroObjects is MacroObjects macroObjects)
                     {
-                        MacroObjects array = (MacroObjects)drawingContainer.MacroObjects;
-
-                        foreach (IMacroObject obj in array)
+                        foreach (IMacroObject obj in macroObjects)
+                        {
                             if (obj.Name == "Ceiling:" + index) return obj;
+                        }
                     }
-                    catch
+                    else if (drawingContainer.MacroObjects is MacroObject macroObject)
                     {
-                        MacroObject pObj = (MacroObject)drawingContainer.MacroObjects;
-                        pMacroObj = (IMacroObject)pObj;
+                        pMacroObj = macroObject;
                     }
-                    return pMacroObj;
                 }
             }
-            return null;
+            return pMacroObj;
         }
 
         //Удаление макрообъекта

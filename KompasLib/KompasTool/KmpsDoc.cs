@@ -35,7 +35,7 @@ namespace KompasLib.Tools
             }
         }
 
-        private KmpsAppl kmpsAppl;
+        private readonly KmpsAppl kmpsAppl;
 
         public KVariable Var;
         public SizeTool ST { get; }
@@ -297,7 +297,7 @@ namespace KompasLib.Tools
             });
         }
 
-        public void SelectConstraintDell(ISelectionManager selectionManager)
+        public void SelectConstraintDell()
         {
             ISelectionManager selection = GetSelectContainer();
             if (selection.SelectedObjects != null)
@@ -438,7 +438,6 @@ namespace KompasLib.Tools
 
         public Rect MakeGabarit(int objRef)
         {
-            ksRectangleParam recPar = (ksRectangleParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RectangleParam);
             ksRectParam spcGabarit = (ksRectParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RectParam);
             if (this.D5.ksGetObjGabaritRect(objRef, spcGabarit) == 1)
             {

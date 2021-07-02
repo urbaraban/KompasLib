@@ -63,7 +63,7 @@ namespace KompasLib.Tools
 
         public static  bool someFlag = true;
 
-        public static  IApplication Appl { get; set; }
+        public static IApplication Appl { get; set; }
         public static ksMathematic2D Mat
         {
             get => mat;
@@ -256,8 +256,13 @@ namespace KompasLib.Tools
             return false;
         }
 
-
-        private  void AdviseDoc(object doc, int docType, int objType/*-1*/)
+        /// <summary>
+        /// Subcribe on document
+        /// </summary>
+        /// <param name="doc">Select document</param>
+        /// <param name="docType">Document type</param>
+        /// <param name="objType">Object type to subcribe (-1 — All, 0-99 — Other</param>
+        private void AdviseDoc(object doc, int docType, int objType/*-1*/)
         {
             if (doc == null)
                 return;

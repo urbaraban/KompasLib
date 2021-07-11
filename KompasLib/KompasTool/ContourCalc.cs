@@ -5,6 +5,7 @@ using Kompas6Constants;
 using KompasLib.Tools;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using reference = System.Int32;
@@ -15,7 +16,7 @@ namespace KompasLib.KompasTool
     {
         public static int[] YesTypeObject = { 1, 2, 3, 8, 26, 28, 31, 32, 33, 34, 35, 36, 80 };
 
-        public static GeometryGroup GetGeometry(KmpsDoc doc, double crs, bool add, bool cursor = true)
+        public async static Task<GeometryGroup> GetGeometry(KmpsDoc doc, double crs, bool add, bool cursor = true)
         {
             if (KmpsAppl.KompasAPI != null)
             {
@@ -65,8 +66,6 @@ namespace KompasLib.KompasTool
 
                 GeometryGroup geometryGroup = new GeometryGroup();
 
-                // contoursList.DisplayName = doc.D7.Name;
-
                 //
                 //Начинаем перебор контуров со всем что есть
                 //
@@ -96,35 +95,6 @@ namespace KompasLib.KompasTool
             }
             else MessageBox.Show("Объект не захвачен", "Сообщение");
 
-            return null;
-
-           
-            
-        }
-
-
-        public static List<IContour> GetContourFromSelectObj(ISelectionManager selectionManager, KmpsDoc doc)
-        {
-            if (selectionManager.SelectedObjects != null)
-            {
-                List<IContour> contours = new List<IContour>();
-
-                IDrawingContours drawingContours = doc.GetDrawingContainer().DrawingContours;
-
-                // Получить массив объектов
-                if (selectionManager.SelectedObjects is Array array)
-                {
-                    foreach (object obj in array) contours.Add(MakeContour(obj, drawingContours));
-                }
-                else
-                {
-                    //если один объект
-                    contours.Add(MakeContour(selectionManager.SelectedObjects, drawingContours));
-                }
-
-
-                return contours;
-            }
             return null;
         }
 
@@ -204,27 +174,27 @@ namespace KompasLib.KompasTool
 
         public static GeometryGroup GetSelectGeometry(ISelectionManager selectionManager, IDrawingContours drawingContours, double CRS)
         {
-            if (selectionManager.SelectedObjects != null)
-            {
-                GeometryGroup geometryGroup = new GeometryGroup();
-
-                // Получить массив объектов
-                if (selectionManager.SelectedObjects is Array array)
+                if (selectionManager.SelectedObjects != null)
                 {
-                    foreach (object obj in array)
+                    GeometryGroup geometryGroup = new GeometryGroup();
+
+                    // Получить массив объектов
+                    if (selectionManager.SelectedObjects is Array array)
                     {
-                        CheckAddObject(GetObjGeometry(obj, CRS, drawingContours), geometryGroup);
+                        foreach (object obj in array)
+                        {
+                            CheckAddObject(GetObjGeometry(obj, CRS, drawingContours), geometryGroup);
+                        }
                     }
-                }
-                else
-                {
-                    //если один объект
-                    CheckAddObject(GetObjGeometry(selectionManager.SelectedObjects, CRS, drawingContours), geometryGroup);
-                }
+                    else
+                    {
+                        //если один объект
+                        CheckAddObject(GetObjGeometry(selectionManager.SelectedObjects, CRS, drawingContours), geometryGroup);
+                    }
 
-                return geometryGroup;
-            }
-            return null;
+                    return geometryGroup;
+                }
+                return null;
 
             void CheckAddObject(Geometry geometry, GeometryGroup geometryGroup)
             {
@@ -236,17 +206,18 @@ namespace KompasLib.KompasTool
         {
             if (obj is IDrawingObject drawingObject)
             {
+                Geometry geometry;
                 switch (drawingObject.DrawingObjectType)
                 {
                     case DrawingObjectTypeEnum.ksDrPoint:
                         IPoint point = (IPoint)drawingObject;
-                        return null;
+                        break;
 
                     case DrawingObjectTypeEnum.ksDrLineSeg:
                         ILineSegment lineSegment = (ILineSegment)drawingObject;
-                        return new LineGeometry(new Point(lineSegment.X1, -lineSegment.Y1),
+                        geometry = new LineGeometry(new Point(lineSegment.X1, -lineSegment.Y1),
                                                 new Point(lineSegment.X2, -lineSegment.Y2));
-
+                        return geometry;
                     case DrawingObjectTypeEnum.ksDrArc:
                         IArc arc = (IArc)drawingObject;
 
@@ -263,9 +234,11 @@ namespace KompasLib.KompasTool
                                         arc.Direction ? SweepDirection.Clockwise : SweepDirection.Counterclockwise,
                                         true));
 
-                        return new PathGeometry(new List<PathFigure>() { pathFigure });
+                        geometry = new PathGeometry(new List<PathFigure>() { pathFigure });
+                        return geometry;
                     default:
-                        return TraceContour(MakeContour(drawingObject, drawingContours), CRS);
+                        geometry = TraceContour(MakeContour(drawingObject, drawingContours), CRS);
+                        return geometry;
                 }
             }
             return null;

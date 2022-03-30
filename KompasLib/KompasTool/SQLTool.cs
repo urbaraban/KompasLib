@@ -34,6 +34,29 @@ namespace KompasLib.Tools
             }
         }
 
+        public static int GetLastAddID(string columName, string tableName, string connectionstr)
+        {
+            using (SqlConnection sqlConnection = new SqlConnection(connectionstr))
+            {
+                int value = -1;
+
+                SqlCommand com = new SqlCommand
+                {
+                    Connection = sqlConnection
+                };
+                sqlConnection.Open();
+                com.CommandText = $"SELECT max({columName}) FROM {tableName}";
+
+                SqlDataReader reader = com.ExecuteReader();
+                if (reader.Read())
+                    value = reader.GetInt32(0);
+
+                sqlConnection.Close();
+
+                return value;
+            }
+        }
+
         public static void Execute(string sqlCmd, string connectionstr)
         {
             using (SqlConnection sqlConnection = new SqlConnection(connectionstr))

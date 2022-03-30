@@ -38,38 +38,5 @@ namespace KompasLib.KompasTool
                 NumberPP = _num;
             }
         }
-
-        public class Factura
-        {
-            public string Name { get; set; }
-            public double Reference { get; set; }
-
-            public Int32 NumberPP { get; set; }
-            
-            public double Width { get; set; }
-
-            public Factura(string _name, Int32 _ref, Int32 _num, Double _width)
-            {
-                Name = _name;
-                Reference = _ref;
-                NumberPP = _num;
-                Width = _width;
-            }
-        }
-
-        public class FacturaColor
-        {
-            public string Name { get; set; }
-            public double Reference { get; set; }
-
-            public Int32 NumberPP { get; set; }
-
-            public FacturaColor(string _name, Int32 _ref, Int32 _num)
-            {
-                Name = _name;
-                Reference = _ref;
-                NumberPP = _num;
-            }
-        }
     }
 }

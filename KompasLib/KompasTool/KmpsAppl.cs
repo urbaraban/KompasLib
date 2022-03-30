@@ -205,7 +205,7 @@ namespace KompasLib.Tools
         {
             if (KmpsAppl.KompasAPI != null)
             {
-                KmpsDoc tempDoc = new KmpsDoc(this);
+                KmpsDoc tempDoc = new KmpsDoc(Appl.ActiveDocument);
 
                 if (tempDoc.D5 != null)
                 {

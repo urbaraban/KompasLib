@@ -1,5 +1,5 @@
 ﻿using KAPITypes;
-using QRCoder;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,16 +12,28 @@ using System.Windows;
 using Kompas6API5;
 using Kompas6API7;
 using Kompas6Constants;
-
+using QRCoder;
+using KompasLib.KompasTool;
 
 namespace KompasLib.Tools
 {
-    public class KmpsDoc : INotifyPropertyChanged
+    public class KmpsDoc : Dictionary<string, NotifyVariable>, INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-        public void OnPropertyChanged([CallerMemberName] string prop = "")
+        private Dictionary<string, NotifyVariable> AboutVariable { get; } = new Dictionary<string, NotifyVariable>();
+
+        public new NotifyVariable this[string name]
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+            get
+            {
+                foreach (KeyValuePair<string, NotifyVariable> keyValuePair in this)
+                {
+                    if (keyValuePair.Key.ToLower() == name.ToLower())
+                        return keyValuePair.Value;
+                }
+                NotifyVariable newVariable = new NotifyVariable(this, name.ToLower(), 0, String.Empty);
+                this.Add(name.ToLower(), newVariable);
+                return newVariable;
+            }
         }
 
         private List<object> selectedobject = new List<object>();
@@ -35,36 +47,30 @@ namespace KompasLib.Tools
             }
         }
 
-        private readonly KmpsAppl kmpsAppl;
-
-        public KVariable Var;
+        public KVariable Var { get; }
         public SizeTool ST { get; }
         public KmpsAttr Attribute { get; }
         public IKompasDocument2D D7 { get; set; }
         public IKompasDocument1 D1 { get; }
         public IKompasDocument2D1 D71 { get; }
         public ksDocument2D D5 { get; set; }
-        public IDocuments Documents7 { get; set; }
         public ksDocumentParam DocPar { get; set; }
         public KmpsMacro Macro { get; set; }
 
-        public KmpsDoc(KmpsAppl appl)
+        public KmpsDoc(IKompasDocument kompasDocument)
         {
-            this.kmpsAppl = appl;
             if (KmpsAppl.KompasAPI != null)
             {
-                this.Documents7 = KmpsAppl.Appl.Documents;
-
                 // Получаем интерфейс активного документа 2D в API7
-                this.D7 = (IKompasDocument2D)KmpsAppl.Appl.ActiveDocument;
+                this.D7 = (IKompasDocument2D)kompasDocument;
 
                 if (D7 == null)
                     return;
 
-                this.D71 = (IKompasDocument2D1)KmpsAppl.Appl.ActiveDocument;
-                this.D1 = (IKompasDocument1)KmpsAppl.Appl.ActiveDocument;
+                this.D71 = (IKompasDocument2D1)kompasDocument;
+                this.D1 = (IKompasDocument1)kompasDocument;
 
-                Attribute = new KmpsAttr(this.kmpsAppl);
+                Attribute = new KmpsAttr(this);
 
                 Attribute.FuncAttrType();
 
@@ -78,11 +84,10 @@ namespace KompasLib.Tools
                     return;
                 else this.DocPar.type = (short)DocType.lt_DocFragment;
 
-                this.Macro = new KmpsMacro(this.kmpsAppl);
+                this.Macro = new KmpsMacro(this);
                 this.ST = new SizeTool(this);
                 this.Var = new KVariable(this);
 
-                this.kmpsAppl.SelectObject += KmpsAppl_SelectObject;
 
                 if (this.GetSelectContainer().SelectedObjects != null)
                 {
@@ -107,19 +112,6 @@ namespace KompasLib.Tools
             }
         }
 
-        private void KmpsAppl_SelectObject(object sender, object e)
-        {
-            if (e == null)
-            {
-                this.SelectedObjects.Clear();
-                OnPropertyChanged("SelectedObjects");
-            }
-            else
-            {
-                this.SelectedObjects.Add(e);
-                OnPropertyChanged("SelectedObjects");
-            }
-        }
 
 
         //Получает только селектированные объекты
@@ -237,7 +229,7 @@ namespace KompasLib.Tools
 
         public ILayer GiveLayer(int number)
         {
-            ViewsAndLayersManager ViewsMng = this.kmpsAppl.Doc.D7.ViewsAndLayersManager;
+            ViewsAndLayersManager ViewsMng = this.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
             IView view = views.ActiveView;
 
@@ -264,7 +256,7 @@ namespace KompasLib.Tools
 
         public void VisibleLayer(int number, bool visible)
         {
-            ViewsAndLayersManager ViewsMng = this.kmpsAppl.Doc.D7.ViewsAndLayersManager;
+            ViewsAndLayersManager ViewsMng = this.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
             IView view = views.ActiveView;
 
@@ -280,7 +272,7 @@ namespace KompasLib.Tools
         public async void LockedLayerAsync(int number, bool locked, bool inverse = false)
         {
             await Task.Run(() => { 
-            ViewsAndLayersManager ViewsMng = this.kmpsAppl.Doc.D7.ViewsAndLayersManager;
+            ViewsAndLayersManager ViewsMng = this.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
             IView view = views.ActiveView;
 
@@ -331,7 +323,7 @@ namespace KompasLib.Tools
                 ksRequestInfo info = (ksRequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
 
                 if ((x == 0) && (y == 0))
-                    this.kmpsAppl.Doc.D5.ksCursor(info, ref x, ref y, 0);
+                    this.D5.ksCursor(info, ref x, ref y, 0);
 
                 Bitmap bitmap = OnEncode(message);
                 string outputFileName = Path.GetTempFileName().Replace(".tmp", ".jpg");
@@ -345,7 +337,7 @@ namespace KompasLib.Tools
                         fs.Write(bytes, 0, bytes.Length);
                     }
                 }
-                IRasters rasters = this.kmpsAppl.Doc.GetDrawingContainer().Rasters;
+                IRasters rasters = this.GetDrawingContainer().Rasters;
                 IRaster raster = rasters.Add();
                 raster.FileName = outputFileName;
                 raster.SetPlacement(x, y - scale, 0, false);
@@ -447,6 +439,13 @@ namespace KompasLib.Tools
             }
 
             return new Rect(0,0,0,0);
+        }
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void OnPropertyChanged([CallerMemberName] string prop = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
     }
 }

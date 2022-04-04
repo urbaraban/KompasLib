@@ -737,9 +737,10 @@ namespace KompasLib.Tools
                                 IRectangle obj = (IRectangle)pDrawObj;
                                 if (obj.Style == 1 || obj.Style == 7)
                                 {
-                                    object Dim = SetLineDim(obj.X + obj.Width, obj.Y + obj.Height, obj.X, obj.Y, 20, ksLineDimensionOrientationEnum.ksLinDHorizontal);
+                                    object Dim = SetLineDim(obj.X + obj.Width, obj.Y, obj.X, obj.Y, 20, ksLineDimensionOrientationEnum.ksLinDHorizontal);
                                     SetConstrainttDim(Dim, obj, 1, 0, variable);
-                                    Dim = SetLineDim(obj.X, obj.Y, obj.X + obj.Width, obj.Y + obj.Height, 20, ksLineDimensionOrientationEnum.ksLinDVertical);
+
+                                    Dim = SetLineDim(obj.X, obj.Y, obj.X, obj.Y + obj.Height, 20, ksLineDimensionOrientationEnum.ksLinDVertical);
                                     SetConstrainttDim(Dim, obj, 0, 1, variable);
                                 }
                                 break;
@@ -997,19 +998,7 @@ namespace KompasLib.Tools
         /// <param name="Y"></param>
         /// <param name="Width"></param>
         /// <param name="Height"></param>
-        public void MakeRectangle(double X, double Y, double Width, double Height)
-        {
-            Rectangles rectangles = this.doc.GetDrawingContainer().Rectangles;
 
-            _Rectangle rectangle = rectangles.Add();
-
-            rectangle.X = X;
-            rectangle.Y = Y;
-            rectangle.Width = Width;
-            rectangle.Height = Height;
-
-            rectangle.Update();
-        }
      
         /// <summary>
         /// Get selection object

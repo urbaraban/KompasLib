@@ -343,11 +343,11 @@ namespace KompasLib.Tools
             SelectObject?.Invoke(this, KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference));
         }
 
-        private  void ObjEvent_OnCreatedObjectRef(object sender, int e)
+        private void ObjEvent_OnCreatedObjectRef(object sender, int e)
         {
-            if (KmpsAppl.someFlag)
+            if (KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference) is IDrawingObject obj)
             {
-               CreatedObject?.Invoke(null, (IDrawingObject)KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference));
+                CreatedObject?.Invoke(null, obj);
             }
         }
 

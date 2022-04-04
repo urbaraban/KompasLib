@@ -30,8 +30,6 @@ namespace KompasLib.KompasTool
                 {
                     double x = 0, y = 0;
                     RequestInfo info = (RequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
-
-                    //Ищем или находим макрообъект по индексу потолка
                     
                     //Создаем если нет
                     if (macroObject == null) macroObject = doc.Macro.MakeCeilingMacro("0");

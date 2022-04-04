@@ -316,7 +316,7 @@ namespace KompasLib.Tools
             }
         }
 
-        public void CreateQrCode(string message, double scale, double x = 0, double y = 0)
+        public IRaster CreateQrCode(string message, double scale, double x = 0, double y = 0)
         {
             if (message != string.Empty)
             {
@@ -344,6 +344,8 @@ namespace KompasLib.Tools
                 raster.Scale = scale / (bitmap.Height/3.77);
                 raster.InsertionType = true;
                 raster.Update();
+                
+                return raster;
 
                 Bitmap OnEncode(string Data)
                 {
@@ -355,6 +357,7 @@ namespace KompasLib.Tools
                     return qrCodeImage;
                 }
             }
+            return null;
         }
 
      

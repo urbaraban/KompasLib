@@ -16,14 +16,14 @@ namespace KompasLib.Event
 {
 	public class Document2DEvent : BaseEvent, ksDocument2DNotify
 	{
-        public Document2DEvent(object obj, object doc)
-            : base(obj, typeof(ksDocument2DNotify).GUID, doc,
-            -1)
-        { }
+		public Document2DEvent(object obj, object doc)
+			: base(obj, typeof(ksDocument2DNotify).GUID, doc,
+			-1)
+		{ }
 
-        // d3BeginRebuild - Начало перестроения модели
-        public bool BeginRebuild()
-		{ 
+		// d3BeginRebuild - Начало перестроения модели
+		public bool BeginRebuild()
+		{
 			return true;
 		}
 
@@ -37,7 +37,7 @@ namespace KompasLib.Event
 
 		// d3BeginChoiceMaterial - Начало выбора материала
 		public bool BeginChoiceMaterial()
-		{ 
+		{
 			return true;
 		}
 
@@ -62,15 +62,15 @@ namespace KompasLib.Event
 			return true;
 		}
 
-    public bool BeginChoiceProperty(int objRef, double propID)
-    {
-      return true;
-    }
+		public bool BeginChoiceProperty(int objRef, double propID)
+		{
+			return true;
+		}
 
-    public bool ChoiceProperty(int objRef, double propID)
-    {
-      return true;
-    }
+		public bool ChoiceProperty(int objRef, double propID)
+		{
+			return true;
+		}
 
 	}
 }

@@ -37,16 +37,6 @@ namespace KompasLib.Tools
         //public
         //
 
-        //Изменили документ
-        public event EventHandler<object> CreatedDoc;
-        public event EventHandler<object> OpenedDoc;
-        public event EventHandler<object> CreatedObject;
-        public event EventHandler<object> SelectObject;
-        public event EventHandler<object> UnselectedObject;
-        public event EventHandler<Tuple<int, bool>> EventKeyUp;
-
-
-
         //Отключились
         public  event EventHandler<bool> ConnectBoolEvent;
 
@@ -57,7 +47,6 @@ namespace KompasLib.Tools
             {
                 this.doc = value;
                 OnPropertyChanged("Doc");
-                OpenedDoc?.Invoke(this, value);
             }
         }
 
@@ -83,13 +72,11 @@ namespace KompasLib.Tools
 
         public static ArrayList EventList { get; set; } = new ArrayList();
 
-        public static  KompasObject KompasAPI { get; set; }
+        public static KompasObject KompasAPI { get; set; }
         #endregion
 
-        public KmpsAppl()
-        {
+        public ApplicationEvent AppEvent { get; set; }
 
-        }
 
         [STAThread]
         public bool Connect() 
@@ -105,7 +92,7 @@ namespace KompasLib.Tools
 #endif
                 try
                 {
-                        KmpsAppl.KompasAPI = (KompasObject)Marshal.GetActiveObject(progId);
+                    KmpsAppl.KompasAPI = (KompasObject)Marshal.GetActiveObject(progId);
                 }
                 catch (Exception)
                 {
@@ -130,15 +117,9 @@ namespace KompasLib.Tools
 
                         if (!BaseEvent.FindEvent(typeof(ApplicationEvent), null, -1))
                         {
-                            ApplicationEvent aplEvent = new ApplicationEvent(KmpsAppl.KompasAPI);
-                            aplEvent.Advise();
-                            aplEvent.OpenedDoc += AplEvent_OpenedDoc;
-                            aplEvent.CreatedDoc += AplEvent_CreatedDoc;
-                            aplEvent.ChangeDoc += AplEvent_ChangeDoc;
-                            aplEvent.EvKeyUp += AplEvent_EvKeyUp;
+                            AppEvent = new ApplicationEvent(KmpsAppl.KompasAPI);
+                            AppEvent.Advise();
                         }
-
-                        SelectDoc();
                     }
                     catch (InvalidCastException e)
                     {
@@ -149,49 +130,7 @@ namespace KompasLib.Tools
             return KmpsAppl.KompasAPI != null;
         }
 
-        private  void AplEvent_EvKeyUp(object sender, Tuple<int, bool> e)
-        {
-            EventKeyUp?.Invoke(null, e);
-        }
 
-        private  void AplEvent_ChangeDoc(object sender, object e)
-        {
-            BaseEvent.TerminateEvents(null, this.doc.D5, -1, null);
-            SelectDoc();
-        }
-
-        private  void AplEvent_CreatedDoc(object sender, object e)
-        {
-            CreatedDoc?.Invoke(this, e);
-            SelectDoc();
-        }
-
-        private  void AplEvent_OpenedDoc(object sender, object e)
-        {
-            OpenedDoc?.Invoke(this, e);
-            SelectDoc();
-        }
-
-        public  bool OpenFile(string filepath)
-        {
-            int type = KmpsAppl.KompasAPI.ksGetDocumentTypeByName(filepath);
-            switch (type)
-            {
-
-                case (int)DocType.lt_DocSheetStandart:  //2d документы
-                case (int)DocType.lt_DocFragment:
-                    this.Doc.D5 = (ksDocument2D)KmpsAppl.KompasAPI.Document2D();
-                    if (this.Doc.D5 != null)
-                        Process.Start(filepath);
-                    return true;
-
-            }
-
-            int err = KmpsAppl.KompasAPI.ksReturnResult();
-            if (err != 0)
-                KmpsAppl.KompasAPI.ksResultNULL();
-            return false;
-        }
         public static void ZoomAll()
         {
             if (KmpsAppl.KompasAPI != null)
@@ -201,27 +140,6 @@ namespace KompasLib.Tools
             }
         }
 
-        public void SelectDoc()
-        {
-            if (KmpsAppl.KompasAPI != null)
-            {
-                KmpsDoc tempDoc = new KmpsDoc(Appl.ActiveDocument);
-
-                if (tempDoc.D5 != null)
-                {
-                    int[] YesType = { 1, 4, 9, 35, 27 };
-
-                   // for (int i = 0; i < YesType.Length; i++)
-                    //{
-                        if (!BaseEvent.FindEvent(typeof(DocumentEvent), tempDoc, 0 /*YesType[i]*/))
-                             AdviseDoc((Kompas6API5.ksDocumentFileNotify_Event)KmpsAppl.KompasAPI.ksGetDocumentByReference(tempDoc.D5.reference), KmpsAppl.KompasAPI.ksGetDocumentType(tempDoc.D5.reference), 0 /*YesType[i]*/);
-                    //}
-
-                    this.Doc = tempDoc;
-                    this.OpenedDoc?.Invoke(this, this.Doc);
-                }             
-            }
-        }
 
         public bool CreateDoc()
         {
@@ -254,101 +172,6 @@ namespace KompasLib.Tools
                 }
             }
             return false;
-        }
-
-        /// <summary>
-        /// Subcribe on document
-        /// </summary>
-        /// <param name="doc">Select document</param>
-        /// <param name="docType">Document type</param>
-        /// <param name="objType">Object type to subcribe (-1 — All, 0-99 — Other</param>
-        private void AdviseDoc(object doc, int docType, int objType/*-1*/)
-        {
-            if (doc == null)
-                return;
-
-            // События документа, необходимы для своевременной отписки
-            if (!BaseEvent.FindEvent(typeof(DocumentEvent), doc, -1))
-            {
-                // Обработчик событий от документа
-                DocumentEvent docEvent = new DocumentEvent((Kompas6API5.ksDocumentFileNotify_Event)doc);
-                // Подписка на события документа
-                int advise = docEvent.Advise();
-
-                // Неудачная подписка на события документа
-                if (advise == 0)
-                    return;
-
-                switch (docType)
-                {
-                    case (int)DocType.lt_DocSheetStandart:      // 1 - чертеж стандартный
-                    case (int)DocType.lt_DocSheetUser:          // 2 - чертеж нестандартный
-                    case (int)DocType.lt_DocFragment:           // 3 - фрагмент
-                        ksDocument2D doc2D = (ksDocument2D)doc; // Интерфейс документа
-
-                        // Документ 2D
-                        if (!BaseEvent.FindEvent(typeof(Document2DEvent), doc2D, objType))
-                        {
-                            object doc2DNotify = doc2D.GetDocument2DNotify();
-                            if (doc2DNotify != null)
-                            {
-                                Document2DEvent document2DEvent = new Document2DEvent(doc2DNotify, doc2D);
-                                document2DEvent.Advise();
-                            }
-                        }
-
-
-                        // Селектирование
-
-                        if (!BaseEvent.FindEvent(typeof(SelectMngEvent), doc2D, objType))
-                        {
-                            object selMsg = doc2D?.GetSelectionMngNotify();
-                            if (selMsg != null)
-                            {
-                                SelectMngEvent selEvent = new SelectMngEvent(selMsg, doc2D);
-                                selEvent.Advise();
-                                Console.WriteLine("Sub SelecMng");
-                                selEvent.SelectedObject += SelEvent_SelectedObject;
-                                selEvent.UnselectedObject += SelEvent_UnselectedObject;
-                            }
-                        }
-
-
-                        // Объект 2D документа
-                        if (objType >= 0) // Тип приходит всегда
-                        {
-                            if (!BaseEvent.FindEvent(typeof(Object2DEvent), doc2D, objType))
-                            {
-                                object objNotify = doc2D?.GetObject2DNotify(objType);
-                                if (objNotify != null)
-                                {
-                                    Object2DEvent objEvent = new Object2DEvent(objNotify, doc2D, objType, doc2D.GetObject2DNotifyResult());
-                                    objEvent.Advise();
-                                    objEvent.OnCreatedObjectRef += ObjEvent_OnCreatedObjectRef;
-                                }
-                            }
-                        }
-                        break;
-                }
-            }
-        }
-
-        private void SelEvent_UnselectedObject(object sender, int e)
-        {
-            UnselectedObject?.Invoke(this, KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference));
-        }
-
-        private void SelEvent_SelectedObject(object sender, int e)
-        {
-            SelectObject?.Invoke(this, KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference));
-        }
-
-        private void ObjEvent_OnCreatedObjectRef(object sender, int e)
-        {
-            if (KmpsAppl.KompasAPI.TransferReference(e, this.Doc.D5.reference) is IDrawingObject obj)
-            {
-                CreatedObject?.Invoke(null, obj);
-            }
         }
 
         public  void DisconnectKmps()

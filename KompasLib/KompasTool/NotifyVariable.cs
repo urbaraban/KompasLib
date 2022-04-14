@@ -24,7 +24,7 @@ namespace KompasLib.KompasTool
 
         public double Value
         {
-            get => this._variable7.Value;
+            get => this._variable7 != null ? this._variable7.Value : 0;
             set
             {
                 if (this._variable7 != null)
@@ -37,7 +37,7 @@ namespace KompasLib.KompasTool
 
         public string Note
         {
-            get => this._variable7.Note;
+            get => this._variable7 != null ? this._variable7.Note : String.Empty;
             set
             {
                 if (this._variable7 != null)

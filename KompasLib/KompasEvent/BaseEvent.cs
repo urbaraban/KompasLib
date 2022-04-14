@@ -118,7 +118,7 @@ namespace KompasLib.Event
 
 
         // Отписаться от получения событий
-        void Unadvise()
+        public void Unadvise()
         {
             if (m_Cookie == 0)
                 return;
@@ -146,7 +146,7 @@ namespace KompasLib.Event
 
 
         // Отписать все события по GUID и документу
-        public static void TerminateEvents(Type type, object doc, int objType, ksFeature obj3D)
+        public void TerminateEvents(int objType = -1)
         {
             int count = KmpsAppl.EventList.Count;
             for (int i = count - 1; i >= 0; i--)
@@ -155,9 +155,11 @@ namespace KompasLib.Event
                 BaseEvent evt = (BaseEvent)obj;
 
                 if (evt != null &&
-                    (evt.GetType() == type || type == null) &&
-                    (doc == null || evt.m_Doc == doc) &&
-                    (objType == -1 || evt.m_ObjType == objType))
+                    (evt.GetType() == this.GetType()) 
+                    &&
+                    (evt.m_Doc == this.m_Doc) 
+                    &&
+                    (objType == -1 || evt.m_ObjType == this.m_ObjType))
                 {
                     evt.Disconnect();   // В деструкторе будет удален из списка RemoveAt(pos)
                     KmpsAppl.EventList.Remove(evt);
@@ -167,7 +169,7 @@ namespace KompasLib.Event
 
 
         // Освободить ссылки
-        void Clear()
+        public void Clear()
         {
             if (m_Container != null)
             {
@@ -184,7 +186,7 @@ namespace KompasLib.Event
 
 
         // Отсоединиться
-        void Disconnect()
+        public void Disconnect()
         {
             Unadvise();
             Clear();

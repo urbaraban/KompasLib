@@ -16,10 +16,19 @@ namespace KompasLib.Event
 {
     public class ApplicationEvent : BaseEvent, ksKompasObjectNotify
     {
-        public event EventHandler<object> OpenedDoc;
-        public event EventHandler<object> CreatedDoc;
-        public event EventHandler<object> ChangeDoc;
-        public event EventHandler<Tuple<int, bool>> EvKeyUp;
+        public DocumentOpenedDelegate DocumentOpened { get; set; }
+        public delegate void DocumentOpenedDelegate(object newDoc, int docType);
+
+        public DocumentCreateDelegate DocumentCreated { get; set; }
+        public delegate void DocumentCreateDelegate(object newDoc, int docType);
+
+        public DocumentChangedDelegate DocumentChanged { get; set; }
+        public delegate void DocumentChangedDelegate(object DocDispatch, int docType);
+
+        public KeyUpDelegate KeyboardDown { get; set; }
+        public delegate void KeyUpDelegate(int key, int flags, bool system);
+       
+
         public event EventHandler DisconnectDoc;
 
         public ApplicationEvent(object obj)
@@ -52,6 +61,13 @@ namespace KompasLib.Event
             return true;
         }
 
+        // koCreateDocument - Документ создан
+        public bool CreateDocument(object newDoc, int docType)
+        {
+            DocumentCreated?.Invoke(newDoc, docType);
+            return true;
+        }
+
 
         // koOpenDocumenBegin - Начало открытия документа
         public bool BeginOpenDocument(string fileName)
@@ -70,15 +86,7 @@ namespace KompasLib.Event
         // koActiveDocument - Переключение на другой активный документ
         public bool ChangeActiveDocument(object newDoc, int docType)
         {
-            ChangeDoc?.Invoke(this, newDoc);
-            return true;
-        }
-
-
-        // koCreateDocument - Документ создан
-        public bool CreateDocument(object newDoc, int docType)
-        {
-            CreatedDoc?.Invoke(this, newDoc);
+            DocumentChanged?.Invoke(newDoc, docType);
             return true;
         }
 
@@ -86,20 +94,20 @@ namespace KompasLib.Event
         // koOpenDocumen - Документ открыт
         public bool OpenDocument(object newDoc, int docType)
         {
-            OpenedDoc?.Invoke(null, newDoc);
+            DocumentOpened?.Invoke(newDoc, docType);
             return true;
         }
 
         // koKeyDown - Событие клавиатуры
         public bool KeyDown(ref int key, int flags, bool system)
         {
+            KeyboardDown?.Invoke(key, flags, system);
             return true;
         }
 
         // koKeyUp - Событие клавиатуры
         public bool KeyUp(ref int key, int flags, bool system)
         {
-            EvKeyUp?.Invoke(this, new Tuple<int, bool>(key, system));
             return true;
         }
 

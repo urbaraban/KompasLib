@@ -12,7 +12,8 @@ namespace KompasLib.Event
 {
     public class Object2DEvent : BaseEvent, ksObject2DNotify
     {
-        public event EventHandler<int> OnCreatedObjectRef;
+        public delegate void CreateObjectRefDelegate(int reference);
+        public event CreateObjectRefDelegate CreateObjectRef;
 
         private ksObject2DNotifyResult m_res;
         public Object2DEvent(object obj, object doc, int objType,
@@ -144,7 +145,7 @@ namespace KompasLib.Event
         // koCreate - Создание объектов
         public bool CreateObject(int objout)
         {
-            OnCreatedObjectRef(this, objout);
+            CreateObjectRef?.Invoke(objout);
             return true;
         }
 

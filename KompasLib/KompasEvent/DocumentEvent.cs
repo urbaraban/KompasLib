@@ -58,7 +58,6 @@ namespace KompasLib.Event
         // kdActiveDocument - Документ активизирован.
         public bool Activate()
         {
-
             return true;
         }
 

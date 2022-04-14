@@ -14,13 +14,13 @@ using Kompas6API7;
 using Kompas6Constants;
 using QRCoder;
 using KompasLib.KompasTool;
+using KompasLib.Event;
 
 namespace KompasLib.Tools
 {
     public class KmpsDoc : Dictionary<string, NotifyVariable>, INotifyPropertyChanged
     {
         private Dictionary<string, NotifyVariable> AboutVariable { get; } = new Dictionary<string, NotifyVariable>();
-
         public new NotifyVariable this[string name]
         {
             get
@@ -56,6 +56,10 @@ namespace KompasLib.Tools
         public ksDocument2D D5 { get; set; }
         public ksDocumentParam DocPar { get; set; }
         public KmpsMacro Macro { get; set; }
+
+        public Object2DEvent DocEvents { get; set; }
+        public SelectMngEvent selEvent { get; set; }
+        public Document2DEvent document2DEvent { get; set; }
 
         public KmpsDoc(IKompasDocument kompasDocument)
         {
@@ -109,10 +113,96 @@ namespace KompasLib.Tools
                         }
                     }
                 }
+
+                this.AdviseDoc();
+
             }
         }
 
+        /// <summary>
+        /// Subcribe on document
+        /// </summary>
+        /// <param name="doc">Select document</param>
+        /// <param name="docType">Document type</param>
+        /// <param name="objType">Object type to subcribe (-1 — All, 0-99 — Other</param>
+        private void AdviseDoc()
+        {
+            object doc = (Kompas6API5.ksDocumentFileNotify_Event)KmpsAppl.KompasAPI.ksGetDocumentByReference(this.D5.reference);
+            int docType = KmpsAppl.KompasAPI.ksGetDocumentType(this.D5.reference);
+            int objType = 0;
 
+            if (doc == null)
+                return;
+
+            // Обработчик событий от документа
+            DocumentEvent docEvent = new DocumentEvent((Kompas6API5.ksDocumentFileNotify_Event)doc);
+            // Подписка на события документа
+            int advise = docEvent.Advise();
+
+            // Неудачная подписка на события документа
+            if (advise == 0)
+                return;
+
+            switch (docType)
+            {
+                case (int)DocType.lt_DocSheetStandart:      // 1 - чертеж стандартный
+                case (int)DocType.lt_DocSheetUser:          // 2 - чертеж нестандартный
+                case (int)DocType.lt_DocFragment:           // 3 - фрагмент
+                    ksDocument2D doc2D = (ksDocument2D)doc; // Интерфейс документа
+
+                    // Документ 2D
+                    if (BaseEvent.FindEvent(typeof(Document2DEvent), doc2D, objType) == false || document2DEvent == null)
+                    {
+                        object doc2DNotify = doc2D.GetDocument2DNotify();
+                        if (doc2DNotify != null)
+                        {
+                            document2DEvent = new Document2DEvent(doc2DNotify, doc2D);
+                            document2DEvent.Advise();
+                        }
+                    }
+
+                    // Селектирование
+
+                    if (BaseEvent.FindEvent(typeof(SelectMngEvent), doc2D, objType) == false || selEvent == null)
+                    {
+                        object selMsg = doc2D?.GetSelectionMngNotify();
+                        if (selMsg != null)
+                        {
+                            selEvent = new SelectMngEvent(selMsg, doc2D);
+                            selEvent.Advise();
+                        }
+                    }
+
+
+                    // Объект 2D документа
+                    if (objType >= 0) // Тип приходит всегда
+                    {
+                        if (BaseEvent.FindEvent(typeof(Object2DEvent), doc2D, objType) == false || DocEvents == null)
+                        {
+                            object objNotify = doc2D?.GetObject2DNotify(objType);
+                            if (objNotify != null)
+                            {
+                                DocEvents = new Object2DEvent(objNotify, doc2D, objType, doc2D.GetObject2DNotifyResult());
+                                DocEvents.Advise();
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        public void UnadviseDoc()
+        {
+            KmpsAppl.Appl.StopCurrentProcess(false, D7);
+            if (document2DEvent != null) document2DEvent.TerminateEvents();
+            if (selEvent != null) selEvent.TerminateEvents();
+            if (DocEvents != null) DocEvents.TerminateEvents();
+        }
+
+        public void Close()
+        {
+            this.UnadviseDoc();
+        }
 
         //Получает только селектированные объекты
         public ISelectionManager GetSelectContainer()

@@ -246,7 +246,6 @@ namespace KompasLib.Tools
 
                 if (mng != null)
                 {
-
                     return mng;
                 }
             }
@@ -317,7 +316,7 @@ namespace KompasLib.Tools
             return  (IDrawingGroup)KmpsAppl.KompasAPI.TransferReference(this.D5.ksNewGroup(0), this.D5.reference);
         }
 
-        public ILayer GiveLayer(int number)
+        public ILayer GetLayer(int number, string name = "")
         {
             ViewsAndLayersManager ViewsMng = this.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
@@ -329,10 +328,27 @@ namespace KompasLib.Tools
             {
                 layer = Layers.Add();
                 layer.LayerNumber = number;
+                layer.Name = name;
                 layer.Update();
             }
 
             return layer;
+        }
+
+        public void ClearLayer(ILayer layer)
+        {
+            IDrawingContainer drawingContainer = this.GetDrawingContainer();
+
+            if (drawingContainer.Objects[0] != null)
+            {
+                foreach (IDrawingObject drawingObject in drawingContainer.Objects[0])
+                {
+                    if (drawingObject.LayerNumber == layer.LayerNumber)
+                    {
+                        drawingObject.Delete();
+                    }
+                }
+            }
         }
 
         public dynamic GiveSelectOrChooseObj(bool select = true)
@@ -524,16 +540,43 @@ namespace KompasLib.Tools
         public Rect MakeGabarit(int objRef)
         {
             ksRectParam spcGabarit = (ksRectParam)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RectParam);
-            if (this.D5.ksGetObjGabaritRect(objRef, spcGabarit) == 1)
+
+            IDrawingContainer drawingContainer = this.GetDrawingContainer();
+
+            if (drawingContainer.Objects[0] != null)
             {
-                ksMathPointParam mathBop = spcGabarit.GetpBot();
-                ksMathPointParam mathTop = spcGabarit.GetpTop();
-                return new Rect(new System.Windows.Point(mathBop.x, mathBop.y), new System.Windows.Point(mathTop.x, mathTop.y));
+
+                IDrawingGroup TempGroup = this.GetDrawingGroup();
+
+                if (objRef == 0)
+                {
+                    //Добавляем макрообъекты
+                    foreach (object obj in drawingContainer.Objects[0])
+                        TempGroup.AddObjects(obj);
+
+                    objRef = TempGroup.Reference;
+                }
+                if (this.D5.ksGetObjGabaritRect(objRef, spcGabarit) == 1)
+                {
+                    ksMathPointParam mathBop = spcGabarit.GetpBot();
+                    ksMathPointParam mathTop = spcGabarit.GetpTop();
+                    return new Rect(new System.Windows.Point(mathBop.x, mathBop.y), new System.Windows.Point(mathTop.x, mathTop.y));
+                }
+                TempGroup.DetachObjects(TempGroup.Objects[0], true);
             }
 
             return new Rect(0,0,0,0);
         }
 
+        public void TransformObject(int Ref, double x = 0, double y = 0, double a = 0, double sx = 1, double sy = 1)
+        {
+            this.D5.ksMtr(x, y, a, sx, sy);
+
+            this.D5.ksTransformObj(Ref);
+
+            //Удаляем область трансформирования
+            this.D5.ksDeleteMtr();
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")

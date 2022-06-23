@@ -98,7 +98,7 @@ namespace KompasLib.Tools
         {
             this.doc.GetChooseContainer().UnchooseAll();
 
-            ILayer layer = this.doc.GiveLayer(88);
+            ILayer layer = this.doc.GetLayer(88);
             List<Point> points = new List<Point>();
             if (this.doc != null)
             {
@@ -178,7 +178,7 @@ namespace KompasLib.Tools
                         IViews views = ViewsMng.Views;
                         IView view = views.ActiveView;
 
-                        layer = this.doc.GiveLayer(77);
+                        layer = this.doc.GetLayer(77);
 
                         layer.Color = 8355711;
                         layer.Update();
@@ -253,8 +253,8 @@ namespace KompasLib.Tools
                         }
                     }
 
-                    this.doc.GiveLayer(0).Current = true;
-                    this.doc.GiveLayer(0).Update();
+                    this.doc.GetLayer(0).Current = true;
+                    this.doc.GetLayer(0).Update();
                 }
 
                 void SetText(string text, double x, double y, ksAllocationEnum alignEnum, double angle = 0, bool under = false)
@@ -583,7 +583,7 @@ namespace KompasLib.Tools
         {
             this.doc.VisibleLayer(77, false);
             this.doc.VisibleLayer(88, true);
-            _ = this.doc.GiveLayer(88);
+            _ = this.doc.GetLayer(88);
 
             ViewsAndLayersManager ViewsMng = this.doc.D7.ViewsAndLayersManager;
             IViews views = ViewsMng.Views;
@@ -619,7 +619,7 @@ namespace KompasLib.Tools
                 this.doc.VisibleLayer(77, false);
                 this.doc.VisibleLayer(88, true);
 
-                ILayer layer = this.doc.GiveLayer(88);
+                ILayer layer = this.doc.GetLayer(88);
                 layer.Color = 8355711;
                 layer.Update();
 
@@ -665,7 +665,7 @@ namespace KompasLib.Tools
 
                 lineDimension.Update();
 
-                this.doc.GiveLayer(0);
+                this.doc.GetLayer(0);
 
 
                 return lineDimension;

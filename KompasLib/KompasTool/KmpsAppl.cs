@@ -31,7 +31,6 @@ namespace KompasLib.Tools
         private static  ksMathematic2D mat;
         private  IPropertyManager propMng;
         private static IProgressBarIndicator progressBar;
-        private KmpsDoc doc;
 
         //
         //public
@@ -39,16 +38,6 @@ namespace KompasLib.Tools
 
         //Отключились
         public  event EventHandler<bool> ConnectBoolEvent;
-
-        public KmpsDoc Doc
-        {
-            get => this.doc;
-            set
-            {
-                this.doc = value;
-                OnPropertyChanged("Doc");
-            }
-        }
 
         public static  bool someFlag = true;
 

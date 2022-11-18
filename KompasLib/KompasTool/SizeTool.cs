@@ -1100,6 +1100,14 @@ namespace KompasLib.Tools
             return new Tuple<double, double>(0, 0);
         }
 
+        /// <summary>
+        /// Return intersection between two contour
+        /// </summary>
+        /// <param name="contour1"></param>
+        /// <param name="contour2"></param>
+        /// <returns>
+        /// Item1 - Line perimeter, Item2 - Curve perimeter
+        /// </returns>
         public static Tuple<double, double> IntersectionTwoIContour(IContour contour1, IContour contour2)
         {
             double LineInt = 0, CurveInt = 0;

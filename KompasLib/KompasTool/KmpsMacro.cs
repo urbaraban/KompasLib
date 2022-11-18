@@ -33,6 +33,7 @@ namespace KompasLib.Tools
             reference macroRef = this.kmpsDoc.D5.ksEndObj();
             pMacroObj = (IMacroObject)KmpsAppl.KompasAPI.TransferReference(macroRef, this.kmpsDoc.D5.reference);
             pMacroObj.Name = "Ceiling:" + index;
+            pMacroObj.LayerNumber = 99;
             pMacroObj.Update();
             this.kmpsDoc.D5.ksLayer(0);
             return pMacroObj;

@@ -88,6 +88,10 @@
     <AssemblyOriginatorKeyFile>KompasLib.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CONVERTLIBINTERFACES">
+      <HintPath>..\Lib16.15\CONVERTLIBINTERFACES.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="KAPITypes, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files\ASCON\KOMPAS-3D V16\SDK\C#\Common\KAPITypes.dll</HintPath>
@@ -97,19 +101,19 @@
       <HintPath>..\..\..\..\..\..\..\Program Files\ASCON\KOMPAS-3D V16\SDK\C#\Common\KGAXLib.dll</HintPath>
     </Reference>
     <Reference Include="Kompas6API5">
-      <HintPath>..\..\..\..\..\..\..\Program Files\ASCON\KOMPAS-3D V16\SDK\C#\Common\Kompas6API5.dll</HintPath>
+      <HintPath>..\Lib16.15\Kompas6API5.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Kompas6Constants">
-      <HintPath>..\..\..\..\..\..\..\Program Files\ASCON\KOMPAS-3D V16\SDK\C#\Common\Kompas6Constants.dll</HintPath>
+      <HintPath>..\Lib16.15\Kompas6Constants.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Kompas6Constants3D">
-      <HintPath>..\..\..\..\..\..\..\Program Files\ASCON\KOMPAS-3D V16\SDK\C#\Common\Kompas6Constants3D.dll</HintPath>
+      <HintPath>..\Lib16.15\Kompas6Constants3D.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="KompasAPI7">
-      <HintPath>..\..\..\..\..\..\..\Program Files\ASCON\KOMPAS-3D V16\SDK\C#\Common\KompasAPI7.dll</HintPath>
+      <HintPath>..\Lib16.15\KompasAPI7.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="PresentationCore" />

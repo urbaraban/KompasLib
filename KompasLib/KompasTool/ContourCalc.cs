@@ -146,7 +146,7 @@ namespace KompasLib.KompasTool
                             break;
 
                         default:
-                            double[] arrayCurve = pDrawObj.Curve2D.CalculatePolygonByStep(CRS / pDrawObj.Curve2D.Length);
+                            double[] arrayCurve = pDrawObj.Curve2D.CalculatePolygonByStep(CRS/10);
                             PolyLineSegment polyLineSegment = new PolyLineSegment();
 
                             PathFigure pathFigureCurve = new PathFigure();

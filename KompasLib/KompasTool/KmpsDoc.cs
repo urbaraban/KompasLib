@@ -1,19 +1,15 @@
 ﻿using KAPITypes;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using System.Windows;
 using Kompas6API5;
 using Kompas6API7;
 using Kompas6Constants;
-using QRCoder;
-using KompasLib.KompasTool;
 using KompasLib.Event;
+using KompasLib.KompasTool;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using System.Windows;
 
 namespace KompasLib.Tools
 {
@@ -421,49 +417,49 @@ namespace KompasLib.Tools
             }
         }
 
-        public IRaster CreateQrCode(string message, double scale, double x = 0, double y = 0)
-        {
-            if (message != string.Empty)
-            {
-                ksRequestInfo info = (ksRequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
+        //public IRaster CreateQrCode(string message, double scale, double x = 0, double y = 0)
+        //{
+        //    if (message != string.Empty)
+        //    {
+        //        ksRequestInfo info = (ksRequestInfo)KmpsAppl.KompasAPI.GetParamStruct((short)StructType2DEnum.ko_RequestInfo);
 
-                if ((x == 0) && (y == 0))
-                    this.D5.ksCursor(info, ref x, ref y, 0);
+        //        if ((x == 0) && (y == 0))
+        //            this.D5.ksCursor(info, ref x, ref y, 0);
 
-                Bitmap bitmap = OnEncode(message);
-                string outputFileName = Path.GetTempFileName().Replace(".tmp", ".jpg");
+        //        Bitmap bitmap = OnEncode(message);
+        //        string outputFileName = Path.GetTempFileName().Replace(".tmp", ".jpg");
 
-                using (MemoryStream memory = new MemoryStream())
-                {
-                    using (FileStream fs = new FileStream(outputFileName, FileMode.Create, FileAccess.ReadWrite))
-                    {
-                        bitmap.Save(memory, ImageFormat.Jpeg);
-                        byte[] bytes = memory.ToArray();
-                        fs.Write(bytes, 0, bytes.Length);
-                    }
-                }
-                IRasters rasters = this.GetDrawingContainer().Rasters;
-                IRaster raster = rasters.Add();
-                raster.FileName = outputFileName;
-                raster.SetPlacement(x, y - scale, 0, false);
-                raster.Scale = scale / (bitmap.Height/3.77);
-                raster.InsertionType = true;
-                raster.Update();
+        //        using (MemoryStream memory = new MemoryStream())
+        //        {
+        //            using (FileStream fs = new FileStream(outputFileName, FileMode.Create, FileAccess.ReadWrite))
+        //            {
+        //                bitmap.Save(memory, ImageFormat.Jpeg);
+        //                byte[] bytes = memory.ToArray();
+        //                fs.Write(bytes, 0, bytes.Length);
+        //            }
+        //        }
+        //        IRasters rasters = this.GetDrawingContainer().Rasters;
+        //        IRaster raster = rasters.Add();
+        //        raster.FileName = outputFileName;
+        //        raster.SetPlacement(x, y - scale, 0, false);
+        //        raster.Scale = scale / (bitmap.Height/3.77);
+        //        raster.InsertionType = true;
+        //        raster.Update();
                 
-                return raster;
+        //        return raster;
 
-                Bitmap OnEncode(string Data)
-                {
-                    QRCodeGenerator qrGenerator = new QRCodeGenerator();
-                    QRCodeData qrCodeData = qrGenerator.CreateQrCode(Data,
-                    QRCodeGenerator.ECCLevel.Q);
-                    QRCode qrCode = new QRCode(qrCodeData);
-                    Bitmap qrCodeImage = qrCode.GetGraphic(20);
-                    return qrCodeImage;
-                }
-            }
-            return null;
-        }
+        //        Bitmap OnEncode(string Data)
+        //        {
+        //            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+        //            QRCodeData qrCodeData = qrGenerator.CreateQrCode(Data,
+        //            QRCodeGenerator.ECCLevel.Q);
+        //            QRCode qrCode = new QRCode(qrCodeData);
+        //            Bitmap qrCodeImage = qrCode.GetGraphic(20);
+        //            return qrCodeImage;
+        //        }
+        //    }
+        //    return null;
+        //}
 
      
         public async void MakeText(string Text, double TextSize, double x, double y)
